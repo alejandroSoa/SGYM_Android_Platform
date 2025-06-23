@@ -80,7 +80,7 @@ Widget build(BuildContext context) {
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: const Color.fromRGBO(244, 242, 255, 1),
+                      color: Color(0xFFF2F2FF),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.notifications_none, color: Colors.black54, size: 22),
@@ -93,6 +93,7 @@ Widget build(BuildContext context) {
                       child: CircleAvatar(
                         backgroundImage: AssetImage(profileImage),
                         radius: 20,
+                        backgroundColor: Color(0xFFF2F2FF),
                       ),
                     )
                   : const SizedBox(width: 35),

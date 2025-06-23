@@ -88,11 +88,15 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildNavButton({required int index, required String label}) {
     final isSelected = currentIndex == index;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double selectedWidth = screenWidth * 0.36; 
+    double unselectedWidth = screenWidth * 0.16;
+
     return GestureDetector(
       onTap: () => setState(() => currentIndex = index),
       child: Container(
         height: 65,
-        width: isSelected ? 150 : 65,
+        width: isSelected ? selectedWidth : unselectedWidth, 
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF7C4DFF) : const Color(0xFF2C2C2C),
           borderRadius: BorderRadius.circular(50),

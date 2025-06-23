@@ -36,7 +36,6 @@ class DailyActivity extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Rutina
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(10),

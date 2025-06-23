@@ -32,7 +32,7 @@ class ProfileScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF2EEFF),
+                  color: Color(0xFFF2F2FF),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -99,7 +99,7 @@ class _InfoBox extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.deepPurple, size: 24),
+          Icon(icon, color: const Color.fromRGBO(103, 58, 183, 1), size: 24),
           const SizedBox(height: 8),
           Text(label, style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 4),
@@ -121,7 +121,7 @@ class _OptionItem extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2EEFF),
+        color: Color(0xFFF2F2FF),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -152,7 +152,7 @@ class _EditableField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Color(0xFFF2EEFF),
+        color: Color(0xFFF2F2FF),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -175,8 +175,8 @@ class _EditableField extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.edit_note_rounded, color: Color(0xFF7A5AF9), size: 28),
-        ],
+          const Icon(Icons.edit_note_rounded, color: Color.fromRGBO(122, 90, 249, 1)        
+          )],
       ),
     );
   }

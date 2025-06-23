@@ -53,18 +53,10 @@ class HomeScreen extends StatelessWidget {
           DayAdvice(color: Color.fromARGB(255, 122, 90, 249), frase: 'Si la vida te da limones, haz limonada 4K'),
           const SizedBox(height: 12),
 
-          DailyActivity(
-            ejercicios: ['Ejercicio 1', 'Ejercicio 2', 'Ejercicio 3', 'Ejercicio 4', 'Ejercicio 5'],
-            totalEjercicios: 20,
-            dietaPrincipal: 'Ensalada con proteína',
-            citaPrincipal: 'Consulta coach a las 4:00 PM',
-          ),
-          const SizedBox(height: 24),
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFFE7E0F8),
+              color: Color(0xFFF2F2FF),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -83,6 +75,14 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+
+          DailyActivity(
+            ejercicios: ['Ejercicio 1', 'Ejercicio 2', 'Ejercicio 3', 'Ejercicio 4', 'Ejercicio 5'],
+            totalEjercicios: 20,
+            dietaPrincipal: 'Ensalada con proteína',
+            citaPrincipal: 'Consulta coach a las 4:00 PM',
           ),
 
         ],

@@ -34,8 +34,8 @@ class _WeeklyCalendar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7E0F8),
-        borderRadius: BorderRadius.circular(20),
+      color: Color(0xFFF2F2FF),
+      borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
@@ -56,7 +56,7 @@ class _WeeklyCalendar extends StatelessWidget {
               _DayCircle(text: '4', selected: false),
               _DayCircle(text: '5', selected: false),
               _DayCircle(text: '6', selected: false),
-              _DayCircle(text: '7', selected: false, isAdd: true),
+              _DayCircle(text: '7', selected: false),
             ],
           ),
           const SizedBox(height: 16),
@@ -97,12 +97,10 @@ class _WeeklyCalendar extends StatelessWidget {
 class _DayCircle extends StatelessWidget {
   final String text;
   final bool selected;
-  final bool isAdd;
 
   const _DayCircle({
     required this.text,
-    this.selected = false,
-    this.isAdd = false,
+    this.selected = false
   });
 
   @override
@@ -111,7 +109,7 @@ class _DayCircle extends StatelessWidget {
       radius: 16,
       backgroundColor: selected ? Colors.deepPurple : Colors.white,
       child: Text(
-        isAdd ? '+' : text,
+        text,
         style: TextStyle(
           color: selected ? Colors.white : Colors.black,
           fontWeight: FontWeight.w500,
@@ -129,7 +127,7 @@ class _ReminderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7E0F8),
+      color: Color(0xFFF2F2FF),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(

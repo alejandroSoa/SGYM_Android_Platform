@@ -33,7 +33,7 @@ class NotificationsScreen extends StatelessWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF2F2FF), 
+            color: Color(0xFFF2F2FF),
             borderRadius: BorderRadius.circular(24),
           ),
           child: ConstrainedBox(
