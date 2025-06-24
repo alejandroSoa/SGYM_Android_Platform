@@ -47,17 +47,17 @@ class DailyActivity extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: [
-                          Container(
+                        children: [                          Container(
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
                               color: const Color(0xFF9E8DF2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Container(
-                              margin: const EdgeInsets.all(5),
-                              color: Colors.grey,
+                            child: const Icon(
+                              Icons.fitness_center,
+                              color: Colors.white,
+                              size: 18,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -108,10 +108,11 @@ class DailyActivity extends StatelessWidget {
                                   color: const Color(0xFFE4F431),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Container(
-                                  margin: const EdgeInsets.all(5),
-                                  color: Colors.grey,
-                                ),
+                              child: const Icon(
+                              Icons.restaurant,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                               ),
                               const SizedBox(width: 8),
                               const Text(
@@ -123,7 +124,7 @@ class DailyActivity extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(dietaPrincipal, style: const TextStyle(color: Colors.grey)),
                         ],
                       ),
@@ -148,9 +149,10 @@ class DailyActivity extends StatelessWidget {
                                   color: const Color(0xFF50D2C2),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Container(
-                                  margin: const EdgeInsets.all(4),
-                                  color: Colors.grey,
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                  size: 18,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -163,7 +165,7 @@ class DailyActivity extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(citaPrincipal, style: const TextStyle(color: Colors.grey)),
                         ],
                       ),

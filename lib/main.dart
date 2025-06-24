@@ -73,20 +73,19 @@ class _MainLayoutState extends State<MainLayout> {
                 borderRadius: BorderRadius.circular(50),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,                
                 children: [
-                  _buildNavButton(index: 0, label: 'Inicio'),
-                  _buildNavButton(index: 1, label: 'Citas'),
-                  _buildNavButton(index: 2, label: 'Dietas'),
-                  _buildNavButton(index: 3, label: 'Rutinas'),
+                  _buildNavButton(index: 0, label: 'Inicio', icon: Icons.home),
+                  _buildNavButton(index: 1, label: 'Citas', icon: Icons.calendar_today),
+                  _buildNavButton(index: 2, label: 'Dietas', icon: Icons.restaurant),
+                  _buildNavButton(index: 3, label: 'Rutinas', icon: Icons.fitness_center),
                 ],
               ),
             )
           : null,
     );
   }
-
-  Widget _buildNavButton({required int index, required String label}) {
+  Widget _buildNavButton({required int index, required String label, IconData? icon}) {
     final isSelected = currentIndex == index;
     double screenWidth = MediaQuery.of(context).size.width;
     double selectedWidth = screenWidth * 0.36; 
@@ -106,12 +105,20 @@ class _MainLayoutState extends State<MainLayout> {
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(width: 20, height: 20, color: Colors.grey),
+                    Icon(
+                      icon ?? Icons.circle,
+                      size: 25,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 8),
                     Text(label, style: const TextStyle(color: Colors.white)),
                   ],
                 )
-              : Container(width: 16, height: 16, color: Colors.grey),
+              : Icon(
+                  icon ?? Icons.circle,
+                  size: 16,
+                  color: Colors.grey,
+                ),
         ),
       ),
     );

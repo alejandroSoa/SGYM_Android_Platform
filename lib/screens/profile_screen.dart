@@ -50,11 +50,19 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
+              ),              
               const SizedBox(height: 24),
-              const _OptionItem(title: 'Subscripción'),
+              const _OptionItem(
+                title: 'Subscripción', 
+                icon: Icons.credit_card, 
+                iconColor: Color(0xFF7012DA)
+              ),
               const SizedBox(height: 12),
-              const _OptionItem(title: 'QR'),
+              const _OptionItem(
+                title: 'QR', 
+                icon: Icons.qr_code_2_rounded, 
+                iconColor: Color(0xFF7012DA)
+              ),
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -112,8 +120,10 @@ class _InfoBox extends StatelessWidget {
 
 class _OptionItem extends StatelessWidget {
   final String title;
+  final IconData? icon;
+  final Color? iconColor;
 
-  const _OptionItem({required this.title});
+  const _OptionItem({required this.title, this.icon, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +139,9 @@ class _OptionItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(width: 24, height: 24, color: Colors.grey[300]),
+              icon != null
+                  ? Icon(icon, size: 24, color: iconColor ?? Colors.grey[600])
+                  : Container(width: 24, height: 24, color: Colors.grey[300]),
               const SizedBox(width: 12),
               Text(title, style: const TextStyle(fontSize: 16)),
             ],
