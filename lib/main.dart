@@ -5,32 +5,51 @@ import 'package:sgym/screens/appointments_screen.dart';
 import 'package:sgym/screens/routines_screen.dart';
 import 'package:sgym/screens/profile_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/first_time_screen.dart';
 import 'widgets/custom_top_bar.dart';
 import 'config/ScreenConfig.dart';
+import 'services/InitializationService.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final isFirstTime = await InitializationService.isFirstTimeUser();
+  runApp(MyApp(isFirstTime: isFirstTime));
 }
 
 class MyApp extends StatelessWidget {
+  final bool isFirstTime;
+
+  const MyApp({super.key, required this.isFirstTime});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MainLayout(),
+      home: isFirstTime 
+          ? FirstTimeScreen(
+              onComplete: () async {
+                await InitializationService.markFirstTimeDone();
+                if (context.mounted) {
+                  runApp(const MyApp(isFirstTime: false));
+                }
+              },
+            )
+          : const MainLayout(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
+
+
 class MainLayout extends StatefulWidget {
+  const MainLayout({super.key});
+
   @override
   State<MainLayout> createState() => _MainLayoutState();
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int currentIndex = 0;
-
-  final List<Screenconfig> viewConfigs = [
+  int currentIndex = 0;  final List<Screenconfig> viewConfigs = [
     Screenconfig(view: const HomeScreen()), 
     Screenconfig(view: const AppointmentsScreen(), title: 'Citas', showBackButton: true, showProfileIcon: false, showNotificationIcon: false),
     Screenconfig(view: const DietsScreen(), title: 'Dietas', showBackButton: true, showProfileIcon: false, showNotificationIcon: false),
