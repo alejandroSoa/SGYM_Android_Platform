@@ -41,8 +41,7 @@ class ProfileService {
         Uri.parse(url),
       headers: {
         'Authorization': 'Bearer $token',
-        //Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjYsImVtYWlsIjoidGlvLm1hbmNvLjIyMTJAZ21haWwuY29tIiwicm9sZUlkIjoxLCJpYXQiOjE3NTA4NzIyNTgsImV4cCI6MTc1MDg3NTg1OH0.73yqs-nM0M--wgJCoxM5SPXzKNaBRyRY7P8PZ1kyN0k',
-
+        
         'Content-Type': 'application/json',
       },
     );

@@ -4,6 +4,8 @@ import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
 import '../services/QrService.dart';
 import 'dart:convert';
+import '../widgets/MessageDialog.dart';
+import '../services/UserService.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> fetchProfile() async {
     final fetchedProfile = await ProfileService.fetchProfile();
+
     setState(() {
       profile = fetchedProfile;
       loading = false;

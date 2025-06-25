@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/OAuthWebView.dart';
-import '../widgets/MessageDialog.dart';
 import '../services/UserService.dart';
 
 class AuthException implements Exception {
@@ -46,6 +45,7 @@ class AuthService {
 
       UserService.setToken(token);
       UserService.fetchUser();
+
       return true;
     } catch (e) {
       debugPrint("Error en autenticación: $e");

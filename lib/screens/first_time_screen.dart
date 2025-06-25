@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import '../services/InitializationService.dart';
 import '../services/AuthService.dart'; 
+import 'package:flutter/material.dart';
 
 class FirstTimeScreen extends StatefulWidget {
   final VoidCallback onComplete;

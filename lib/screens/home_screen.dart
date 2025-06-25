@@ -4,6 +4,7 @@ import '../widgets/daily_activity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/UserService.dart';
 import '../main.dart';
+import 'package:flutter/services.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -127,23 +128,51 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        snapshot.connectionState == ConnectionState.waiting
-                            ? 'Cargando token...'
-                            : snapshot.data ?? 'No hay token disponible',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'monospace',
-                          color: Color(0xFF333333),
+                    GestureDetector(
+                      onTap: () async {
+                        final token = snapshot.data;
+                        if (token != null && token.isNotEmpty) {
+                          await Clipboard.setData(ClipboardData(text: token));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Token copiado al portapapeles'),
+                              backgroundColor: Color(0xFF7A5AF9),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Color(0xFFDBE0E5)),
                         ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                snapshot.connectionState == ConnectionState.waiting
+                                    ? 'Cargando token...'
+                                    : snapshot.data ?? 'No hay token disponible',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'monospace',
+                                  color: Color(0xFF333333),
+                                ),
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.copy,
+                              size: 16,
+                              color: Color(0xFF7A5AF9),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
