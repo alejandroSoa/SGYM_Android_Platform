@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
+import '../services/QrService.dart';
+import 'dart:convert'; // Para usar base64Decode
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -105,14 +107,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconColor: Color(0xFF7012DA),
               ),
               const SizedBox(height: 12),
-              const _OptionItem(
-                title: 'QR',
-                icon: Icons.qr_code_2_rounded,
-                iconColor: Color(0xFF7012DA),
-              ),
-              const SizedBox(height: 12),
-              _ClearPreferencesButton(),
-              const SizedBox(height: 24),
+                GestureDetector(
+                  onTap: () async {
+                    if (profile == null) return;
+                    final qrData = await QrService.generateQr(profile!.userId);
+                    if (qrData != null && qrData['qr_image_base64'] != null) {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Tu código QR'),
+                          content: Image.memory(
+                            base64Decode(
+                              qrData['qr_image_base64'].split(',').last,
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Cerrar'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No se pudo generar el QR')),
+                      );
+                    }
+                  },
+                  child: const _OptionItem(
+                    title: 'QR',
+                    icon: Icons.qr_code_2_rounded,
+                    iconColor: Color(0xFF7012DA),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _ClearPreferencesButton(),
+                const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
