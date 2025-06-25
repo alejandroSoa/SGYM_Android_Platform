@@ -9,20 +9,30 @@ class ProfileService {
     if (token == null) return null;
 
     final idPath = userId != null ? userId.toString() : '';
+    final url = 'https://sgym-1.free.beeceptor.com/users/2/profile';
 
     final response = await http.get(
-      Uri.parse('https://localhost:3333/users/$idPath/profile'),
+        Uri.parse(url),
       headers: {
-        'Authorization': 'Bearer $token',
+        // 'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return Profile.fromJson(data['data']);
-    } else {
-      return null;
-    }
+      print('DEBUG: Status de respuesta: ${response.statusCode}');
+      print('DEBUG: Cuerpo de respuesta: ${response.body}');
+
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+              print('DEBUG: JSON parseado: $data');
+        print('DEBUG: Sección data: ${data['data']}');
+
+        final profile = Profile.fromJson(data['data']);
+        
+        return profile;
+      } else {
+        return null;
+      }
   }
 }

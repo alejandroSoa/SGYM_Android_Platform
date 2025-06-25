@@ -1,34 +1,83 @@
-import 'package:flutter_web_auth/flutter_web_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import '../widgets/OAuthWebView.dart';
+import '../widgets/MessageDialog.dart';
+import '../services/UserService.dart';
+
+class AuthException implements Exception {
+  final String message;
+  final String? details;
+  
+  AuthException(this.message, {this.details});
+  
+  @override
+  String toString() {
+    if (details != null) {
+      return '$message\n$details';
+    }
+    return message;
+  }
+}
 
 class AuthService {
-  static const String _tokenKey = 'oauth-token';
-  static const String _refreshTokenKey = 'oauth-refresh-token';
-  
-  static Future<bool> authenticateWithOAuth() async {
+  static Future<bool> authenticateWithOAuth(BuildContext context) async {
     try {
-      final result = await FlutterWebAuth.authenticate(
-        url: "https://tu-oauth-provider.com/auth",
-        callbackUrlScheme: "sgym"
+      final redirectUri = 'sgym://oauth-callback';
+      final authUrl = Uri.https(
+        '50f2-2806-267-148b-201d-a092-6159-54c-2788.ngrok-free.app',
+        '/oauth/login',
+        {
+          'redirect_uri': redirectUri,
+          'response_type': 'token',
+        },
       );
 
-      final token = Uri.parse(result).queryParameters['token'];
-      final refreshToken = Uri.parse(result).queryParameters['refresh_token'];
+      final token = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (context) => OAuthWebView(
+            authUrl: authUrl.toString(),
+            redirectUri: redirectUri,
+          ),
+        ),
+      );
 
-      if (token != null && refreshToken != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_tokenKey, token);
-        await prefs.setString(_refreshTokenKey, refreshToken);
-        return true;
+      if (token == null) {
+        throw AuthException("Autenticación cancelada o fallida", 
+          details: "No se recibió un token de autenticación.");
       }
-      return false;
+
+      UserService.setToken(token);
+
+      return true;
     } catch (e) {
-      return false;
+      if (e is AuthException) {
+        rethrow;
+      }
+      throw AuthException("Error de autenticación", details: e.toString());
     }
   }
-
-  static Future<bool> isAuthenticated() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey) != null;
+  
+  static Future<bool> showAuthResult(BuildContext context, bool success, {String? message, dynamic error}) async {
+    String dialogMessage;
+    
+    if (success) {
+      dialogMessage = message ?? "Autenticación completada exitosamente.";
+    } else {
+      if (error is AuthException) {
+        dialogMessage = error.toString();
+      } else if (error != null) {
+        dialogMessage = "Error: $error";
+      } else {
+        dialogMessage = message ?? "Error desconocido durante la autenticación.";
+      }
+    }
+    
+    await MessageDialog.show(
+      context: context, 
+      title: success ? 'Autenticación exitosa' : 'Error de autenticación',
+      message: dialogMessage,
+      type: success ? MessageType.success : MessageType.error,
+    );
+    
+    return success;
   }
 }
