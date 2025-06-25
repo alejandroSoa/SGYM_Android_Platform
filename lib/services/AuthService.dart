@@ -21,9 +21,9 @@ class AuthException implements Exception {
 class AuthService {
   static Future<bool> authenticateWithOAuth(BuildContext context) async {
     try {
-      final redirectUri = 'sgym://oauth-callback';
+      const redirectUri = 'sgym://oauth-callback';
       final authUrl = Uri.https(
-        '50f2-2806-267-148b-201d-a092-6159-54c-2788.ngrok-free.app',
+        'c9ad-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app',
         '/oauth/login',
         {
           'redirect_uri': redirectUri,
@@ -40,44 +40,15 @@ class AuthService {
         ),
       );
 
-      if (token == null) {
-        throw AuthException("Autenticación cancelada o fallida", 
-          details: "No se recibió un token de autenticación.");
+      if (token == null || token.isEmpty) {
+        throw AuthException("Autenticación cancelada o incompleta");
       }
 
       UserService.setToken(token);
-
       return true;
     } catch (e) {
-      if (e is AuthException) {
-        rethrow;
-      }
-      throw AuthException("Error de autenticación", details: e.toString());
+      debugPrint("Error en autenticación: $e");
+      rethrow;
     }
-  }
-  
-  static Future<bool> showAuthResult(BuildContext context, bool success, {String? message, dynamic error}) async {
-    String dialogMessage;
-    
-    if (success) {
-      dialogMessage = message ?? "Autenticación completada exitosamente.";
-    } else {
-      if (error is AuthException) {
-        dialogMessage = error.toString();
-      } else if (error != null) {
-        dialogMessage = "Error: $error";
-      } else {
-        dialogMessage = message ?? "Error desconocido durante la autenticación.";
-      }
-    }
-    
-    await MessageDialog.show(
-      context: context, 
-      title: success ? 'Autenticación exitosa' : 'Error de autenticación',
-      message: dialogMessage,
-      type: success ? MessageType.success : MessageType.error,
-    );
-    
-    return success;
   }
 }

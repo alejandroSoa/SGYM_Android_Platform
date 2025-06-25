@@ -17,6 +17,7 @@ class OAuthWebView extends StatefulWidget {
 
 class _OAuthWebViewState extends State<OAuthWebView> {
   late final WebViewController _controller;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -27,11 +28,18 @@ class _OAuthWebViewState extends State<OAuthWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
+            // Verifica si la URL coincide con el patrón de redirección
             if (request.url.startsWith(widget.redirectUri)) {
               _handleCallback(request.url);
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;
+          },
+          onPageStarted: (url) {
+            setState(() => _isLoading = true);
+          },
+          onPageFinished: (url) {
+            setState(() => _isLoading = false);
           },
         ),
       )
@@ -39,12 +47,17 @@ class _OAuthWebViewState extends State<OAuthWebView> {
   }
 
   void _handleCallback(String url) {
-    final uri = Uri.parse(url);
-    final token = uri.queryParameters['access_token'];
-    
-    if (token != null) {
-      Navigator.of(context).pop(token);
-    } else {
+    try {
+      final uri = Uri.parse(url);
+      final token = uri.queryParameters['access_token'];
+      
+      if (token != null) {
+        Navigator.of(context).pop(token);
+      } else {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      debugPrint('Error procesando callback: $e');
       Navigator.of(context).pop();
     }
   }
@@ -53,13 +66,21 @@ class _OAuthWebViewState extends State<OAuthWebView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SGym'),
+        title: const Text('Iniciar sesión en SGym'),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: WebViewWidget(controller: _controller), 
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+        ],
+      ),
     );
   }
 }
