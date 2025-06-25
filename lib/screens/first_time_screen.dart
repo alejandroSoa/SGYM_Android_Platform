@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/InitializationService.dart';
+import '../services/AuthService.dart'; 
 
 class FirstTimeScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -15,13 +16,42 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
   int _currentPage = 0;
   bool _hasReachedEnd = false;
 
-void _continueToApp() async {
-  await InitializationService.markFirstTimeDone(); 
-  if (mounted) {
-    widget.onComplete(); 
+  Future<void> _continueToApp() async {
+    String? authResult;
+    bool success = false;
+    try {
+      success = await AuthService.authenticateWithOAuth(context)
+        .then((value) {
+          return value;
+        });
+      authResult = "Autenticación completada.\nResultado: $success";
+    } catch (e) {
+      authResult = "Error: $e";
+    }
+  
+    if (mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(success ? 'Resultado de autenticación' : 'Error de autenticación'),
+          content: Text(authResult ?? 'Sin información'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        ),
+      );
+    }
+  
+    if (success) {
+      await InitializationService.markFirstTimeDone();
+      if (mounted) {
+        widget.onComplete();
+      }
+    }
   }
-}
-
   final List<Map<String, String>> _carouselData = [
     {
       'title': 'Bienvenido a SGym',
