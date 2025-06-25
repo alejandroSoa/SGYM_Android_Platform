@@ -1,11 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../interfaces/user/profile_interface.dart';
+import '../services/ProfileService.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Profile? profile;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfile();
+  }
+
+  Future<void> fetchProfile() async {
+    final fetchedProfile = await ProfileService.fetchProfile();
+    setState(() {
+      profile = fetchedProfile;
+      loading = false;
+    });
+
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (profile == null) {
+      return const Scaffold(
+        body: Center(child: Text('Error cargando perfil')),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: SafeArea(
@@ -16,17 +52,23 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 12),
               CircleAvatar(
                 radius: 60,
+                backgroundImage: profile!.photoUrl != null
+                    ? NetworkImage(profile!.photoUrl!)
+                    : null,
                 backgroundColor: Colors.grey[400],
+                child: profile!.photoUrl == null
+                    ? const Icon(Icons.person, size: 60, color: Colors.white)
+                    : null,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Alejandro Sandoval',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                profile!.fullName,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'alesan@gmail.com',
-                style: TextStyle(color: Colors.black54),
+              Text(
+                profile!.phone ?? '',
+                style: const TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 24),
               Container(
@@ -41,27 +83,32 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     _InfoBox(
                       icon: Icons.male,
-                      label: 'Gender',
-                      value: 'Male',
+                      label: 'Género',
+                      value: profile!.gender == 'M'
+                          ? 'Masculino'
+                          : profile!.gender == 'F'
+                              ? 'Femenino'
+                              : profile!.gender,
                     ),
                     _InfoBox(
                       icon: Icons.calendar_month,
-                      label: 'Age',
-                      value: '20 yrs',
+                      label: 'Nacimiento',
+                      value: profile!.birthDate,
                     ),
                   ],
                 ),
-              ),                const SizedBox(height: 24),
+              ),
+              const SizedBox(height: 24),
               const _OptionItem(
-                title: 'Subscripción', 
-                icon: Icons.credit_card, 
-                iconColor: Color(0xFF7012DA)
+                title: 'Subscripción',
+                icon: Icons.credit_card,
+                iconColor: Color(0xFF7012DA),
               ),
               const SizedBox(height: 12),
               const _OptionItem(
-                title: 'QR', 
-                icon: Icons.qr_code_2_rounded, 
-                iconColor: Color(0xFF7012DA)
+                title: 'QR',
+                icon: Icons.qr_code_2_rounded,
+                iconColor: Color(0xFF7012DA),
               ),
               const SizedBox(height: 12),
               _ClearPreferencesButton(),
@@ -70,12 +117,12 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    _EditableField(label: 'Nombre completo', value: 'Alejandro Sandoval'),
-                    SizedBox(height: 12),
+                    _EditableField(label: 'Nombre completo', value: profile!.fullName),
+                    const SizedBox(height: 12),
                     _EditableField(label: 'Contraseña', value: '********'),
-                    SizedBox(height: 12),
-                    _EditableField(label: 'Teléfono', value: '+52 123 456 7890'),
-                    SizedBox(height: 150),
+                    const SizedBox(height: 12),
+                    _EditableField(label: 'Teléfono', value: profile!.phone ?? ''),
+                    const SizedBox(height: 150),
                   ],
                 ),
               ),
