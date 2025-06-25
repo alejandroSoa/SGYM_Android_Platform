@@ -23,7 +23,7 @@ class AuthService {
     try {
       const redirectUri = 'sgym://oauth-callback';
       final authUrl = Uri.https(
-        '2315-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app',
+        'c914-2806-267-1482-1823-b83b-4950-e233-f123.ngrok-free.app',
         '/oauth/login',
         {
           'redirect_uri': redirectUri,
@@ -45,6 +45,7 @@ class AuthService {
       }
 
       UserService.setToken(token);
+      UserService.fetchUser();
       return true;
     } catch (e) {
       debugPrint("Error en autenticación: $e");

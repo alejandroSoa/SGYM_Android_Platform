@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class UserService {
   static const String _tokenKey = 'oauth-token';
-  static const String _baseUrl = 'http://localhost:3333';
+  static const String _baseUrl = 'https://c914-2806-267-1482-1823-b83b-4950-e233-f123.ngrok-free.app';
 
   static Future<void> setToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -39,10 +39,12 @@ class UserService {
     final token = await getToken();
     if (token == null) return null;
   
-    final idPath = userId != null ? userId.toString() : '';
+    final url = userId != null 
+        ? '$_baseUrl/users/${userId.toString()}'
+        : '$_baseUrl/users';
   
     final response = await http.get(
-      Uri.parse('$_baseUrl/users/$idPath'),
+      Uri.parse(url),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -50,10 +52,11 @@ class UserService {
     );
   
     if (response.statusCode == 200) {
-      return json.decode(response.body)['data'];
+        setUser(json.decode(response.body)['data']);
     } else {
       return null;
     }
   }
+
 
   }
