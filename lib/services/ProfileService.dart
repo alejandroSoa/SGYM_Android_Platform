@@ -56,4 +56,42 @@ class ProfileService {
         return null;
       }
   }
+
+      /// Servicio: Actualizar perfil de usuario
+    static Future<Profile?> createProfile({
+      required int userId,
+      required String fullName,
+      required String phone,
+      required String birthDate,
+      required String gender,
+      String? photoUrl,
+    }) async {
+      final token = await UserService.getToken();
+      if (token == null) return null;
+
+      final body = {
+        'user_id': userId,
+        'full_name': fullName,
+        'phone': phone,
+        'birth_date': birthDate,
+        'gender': gender,
+        if (photoUrl != null) 'photo_url': photoUrl,
+      };
+
+      final response = await http.post(
+        Uri.parse('https://localhost:3333/users/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return Profile.fromJson(data['data']);
+      } else {
+        return null;
+      }
+  }
 }
