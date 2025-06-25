@@ -8,8 +8,13 @@ class InitializationService {
     return !(prefs.getBool(_firstInitKey) ?? false);
   }
 
-  static Future<void> markFirstTimeDone() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_firstInitKey, true);
+  static Future<bool> markFirstTimeDone() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_firstInitKey, true);
+      return true; 
+    } catch (e) {
+      return false;
+    }
   }
 }
