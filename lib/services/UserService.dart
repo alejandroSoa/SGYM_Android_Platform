@@ -21,6 +21,19 @@ class UserService {
     await prefs.remove(_tokenKey);
   }
 
+  static Future<void> setUser(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_data', json.encode(user));
+  }
+
+  // Obtiene el usuario de SharedPreferences
+  static Future<Map<String, dynamic>?> getUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user_data');
+    if (userJson == null) return null;
+    return json.decode(userJson) as Map<String, dynamic>;
+  }
+
   // Servicio: Obtener datos de un usuario
   static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
     final token = await getToken();
