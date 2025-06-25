@@ -27,7 +27,6 @@ class MyApp extends StatelessWidget {
       home: isFirstTime 
           ? FirstTimeScreen(
               onComplete: () async {
-                await InitializationService.markFirstTimeDone();
                 if (context.mounted) {
                   runApp(const MyApp(isFirstTime: false));
                 }
