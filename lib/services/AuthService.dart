@@ -23,7 +23,7 @@ class AuthService {
     try {
       const redirectUri = 'sgym://oauth-callback';
       final authUrl = Uri.https(
-        'c9ad-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app',
+        '2315-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app',
         '/oauth/login',
         {
           'redirect_uri': redirectUri,

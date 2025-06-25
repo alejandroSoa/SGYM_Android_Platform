@@ -66,7 +66,7 @@ class _OAuthWebViewState extends State<OAuthWebView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Iniciar sesión en SGym'),
+        title: const Text('SGym'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),

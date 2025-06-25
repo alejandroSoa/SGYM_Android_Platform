@@ -19,15 +19,9 @@ class ProfileService {
       },
     );
 
-      print('DEBUG: Status de respuesta: ${response.statusCode}');
-      print('DEBUG: Cuerpo de respuesta: ${response.body}');
-
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-              print('DEBUG: JSON parseado: $data');
-        print('DEBUG: Sección data: ${data['data']}');
-
         final profile = Profile.fromJson(data['data']);
         
         return profile;

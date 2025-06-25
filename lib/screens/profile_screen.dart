@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
 import '../services/QrService.dart';
-import 'dart:convert'; // Para usar base64Decode
+import 'dart:convert';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
