@@ -44,12 +44,16 @@ class AuthService {
       }
 
       UserService.setToken(token);
-      UserService.fetchUser();
+      final userData = await UserService.fetchUser();
+      if (userData == null) {
+        UserService.clearToken();
+        throw AuthException("Error al obtener informacion,. \nInicie sesion nuevamente.");
+      }
+      await UserService.setUser(userData);
 
       return true;
     } catch (e) {
-      debugPrint("Error en autenticación: $e");
-      rethrow;
+      throw AuthException("Error en autenticación");
     }
   }
 }

@@ -53,15 +53,12 @@ class UserService {
   
     if (response.statusCode == 200) {
         final userData = json.decode(response.body)['data'];
-        await setUser(userData);
         return userData;
     } else {
       return null;
     }
   }
 
-
-    /// Servicio: Actualizar datos de un usuario
   static Future<Map<String, dynamic>?> updateUser({
     required int userId,
     String? email,
@@ -71,7 +68,6 @@ class UserService {
     final token = await getToken();
     if (token == null) return null;
 
-    // Construye el body solo con los campos permitidos
     final Map<String, dynamic> body = {};
     if (email != null) body['email'] = email;
     if (roleId != null) body['role_id'] = roleId;
@@ -89,7 +85,6 @@ class UserService {
     if (response.statusCode == 200) {
       return json.decode(response.body)['data'];
     } else {
-      // Puedes agregar manejo de errores aquí si lo deseas
       return null;
     }
   }

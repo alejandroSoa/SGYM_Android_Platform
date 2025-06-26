@@ -4,8 +4,6 @@ import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
 import '../services/QrService.dart';
 import 'dart:convert';
-import '../widgets/MessageDialog.dart';
-import '../services/UserService.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

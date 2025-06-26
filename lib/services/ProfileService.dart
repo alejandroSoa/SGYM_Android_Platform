@@ -35,8 +35,7 @@ class ProfileService {
 
     final idPath = await User?['id'];
     final url = 'https://2886-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app/users/$idPath/profile';
-    //    final url = 'https://2886-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app/users/6/profile';
-
+    
     final response = await http.get(
         Uri.parse(url),
       headers: {

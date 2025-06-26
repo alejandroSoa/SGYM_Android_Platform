@@ -11,6 +11,9 @@ import 'config/ScreenConfig.dart';
 import 'services/InitializationService.dart';
 
 void main() async {
+  //Agregar evento para cuando tenga firsttime pero no token 
+  //Utilizar la pantalla de carga de flutter para inicializar la app
+  //Usar la pantalla de carga de profile para evitar caragar pantalla a no ser que esten los datos
   WidgetsFlutterBinding.ensureInitialized();
   final isFirstTime = await InitializationService.isFirstTimeUser();
   runApp(MyApp(isFirstTime: isFirstTime));
