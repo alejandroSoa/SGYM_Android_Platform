@@ -20,7 +20,6 @@ class AuthException implements Exception {
 
 class AuthService {
   static Future<bool> authenticateWithOAuth(BuildContext context) async {
-    try {
       final redirectUri = dotenv.env['OAUTH_REDIRECT_URI'] ?? 'sgym://oauth-callback';
       final responseType = dotenv.env['OAUTH_RESPONSE_TYPE'] ?? 'token';
       final authBaseUrl = dotenv.env['AUTH_BASE_URL'];
@@ -51,13 +50,10 @@ class AuthService {
       final userData = await UserService.fetchUser();
       if (userData == null) {
         UserService.clearToken();
-        throw AuthException("Error al obtener informacion,. \nInicie sesion nuevamente.");
+        throw AuthException("Inicie sesion mas tarde.");
       }
       await UserService.setUser(userData);
 
       return true;
-    } catch (e) {
-      throw AuthException("Error en autenticación");
-    }
   }
 }

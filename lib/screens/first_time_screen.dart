@@ -15,8 +15,14 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
   PageController _pageController = PageController();
   int _currentPage = 0;
   bool _hasReachedEnd = false;
+  bool _isAuthenticating = false; 
 
   Future<void> _continueToApp() async {
+    setState(() {
+      _isAuthenticating = true; 
+    });
+
+
     String? authResult;
     bool success = false;
     try {
@@ -26,14 +32,18 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
         });
       authResult = "Autenticación completada.\nResultado: $success";
     } catch (e) {
-      authResult = "Error: $e";
+      authResult = "$e";
     }
-  
+
+    setState(() {
+      _isAuthenticating = false; 
+    });
+
     if (mounted) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(success ? 'Resultado de autenticación' : 'Error de autenticación'),
+          title: Text(success ? 'Verificación exitosa' : 'Oops'),
           content: Text(authResult ?? 'Sin información'),
           actions: [
             TextButton(
@@ -80,6 +90,14 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    if (_isAuthenticating) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
