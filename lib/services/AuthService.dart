@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/OAuthWebView.dart';
 import '../services/UserService.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -20,13 +21,16 @@ class AuthException implements Exception {
 class AuthService {
   static Future<bool> authenticateWithOAuth(BuildContext context) async {
     try {
-      const redirectUri = 'sgym://oauth-callback';
+      final redirectUri = dotenv.env['OAUTH_REDIRECT_URI'] ?? 'sgym://oauth-callback';
+      final responseType = dotenv.env['OAUTH_RESPONSE_TYPE'] ?? 'token';
+      final authBaseUrl = dotenv.env['AUTH_BASE_URL'];
+
       final authUrl = Uri.https(
-        'c914-2806-267-1482-1823-b83b-4950-e233-f123.ngrok-free.app',
+        Uri.parse(authBaseUrl!).host,
         '/oauth/login',
         {
           'redirect_uri': redirectUri,
-          'response_type': 'token',
+          'response_type': responseType,
         },
       );
 

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../interfaces/user/profile_interface.dart';
 import 'UserService.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProfileService {
   static const String _profileKey = 'user_profile';
@@ -34,7 +35,8 @@ class ProfileService {
     if (token == null) return null;
 
     final idPath = await User?['id'];
-    final url = 'https://2886-2806-101e-b-bea-14c6-f2f4-c351-92f7.ngrok-free.app/users/$idPath/profile';
+    final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+    final url = '$baseUrl/users/$idPath/profile';
     
     final response = await http.get(
         Uri.parse(url),
@@ -44,7 +46,6 @@ class ProfileService {
         'Content-Type': 'application/json',
       },
     );
-
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
