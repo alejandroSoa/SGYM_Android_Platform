@@ -24,7 +24,8 @@ const CustomTopBar({
   this.onNotificationsTap,
 });
 
-Widget build(BuildContext context) {
+@override
+  Widget build(BuildContext context) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     child: Row(

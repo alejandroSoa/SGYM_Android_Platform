@@ -5,7 +5,6 @@ import 'UserService.dart';
 class PasswordService {
   static const String _baseUrl = 'http://localhost:3333';
 
-  // Recuperar contraseña (Forgot Password)
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/forgot-password'),
@@ -18,7 +17,6 @@ class PasswordService {
     };
   }
 
-  // Restablecer contraseña (Reset Password)
   static Future<Map<String, dynamic>> resetPassword({
     required String email,
     required String token,
@@ -41,7 +39,6 @@ class PasswordService {
     };
   }
 
-  // Cambiar contraseña (Change Password)
   static Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,

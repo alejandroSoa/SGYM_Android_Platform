@@ -13,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
+  //Agregar icono de la app
   //Agregar evento para cuando tenga firsttime pero no token 
   //Utilizar la pantalla de carga de flutter para inicializar la app
   //Usar la pantalla de carga de profile para evitar caragar pantalla a no ser que esten los datos
