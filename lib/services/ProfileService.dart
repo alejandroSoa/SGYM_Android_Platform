@@ -55,6 +55,24 @@ class ProfileService {
     }
   }
 
+  static Future<void> updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
+    final User = await UserService.getUser();
+    final baseUrl = dotenv.env['AUTH_BASE_URL'];
+    final fullUrl = '$baseUrl/auth/change-password';
+    
+    final body = {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirmation': confirmPassword,
+    };
+
+    final response = await NetworkService.put(fullUrl, body: body);
+
+    if (response.statusCode != 200) {
+      throw Exception(response.body);
+    }
+  }
+
     //Probar funcionalidad
   static Future<Profile?> createProfile({
     required int userId,

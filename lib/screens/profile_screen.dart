@@ -41,6 +41,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _showDateDialog(currentValue);
       return;
     }
+        
+    if (fieldKey == 'password') {
+      _showPasswordDialog();
+      return;
+    }
 
     final TextEditingController controller = TextEditingController(text: currentValue);
     
@@ -112,6 +117,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+    Future<void> _showPasswordDialog() async {
+    final TextEditingController currentPasswordController = TextEditingController();
+    final TextEditingController newPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Scaffold(
+          backgroundColor: Colors.black.withOpacity(0.5),
+          body: SafeArea(
+            child: Center(
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Cambiar Contraseña',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: currentPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña Actual',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF2F2FF),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: newPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Nueva Contraseña',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF2F2FF),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Confirmar Nueva Contraseña',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF2F2FF),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text(
+                            'Cancelar',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: isUpdating ? null : () async {
+                            final currentPassword = currentPasswordController.text.trim();
+                            final newPassword = newPasswordController.text.trim();
+                            final confirmPassword = confirmPasswordController.text.trim();
+                            
+                            if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Todos los campos son obligatorios'),
+                                  backgroundColor: Color.fromARGB(152, 244, 67, 54),
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            if (newPassword != confirmPassword) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Las contraseñas no coinciden'),
+                                  backgroundColor: Color.fromARGB(152, 244, 67, 54),
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            Navigator.of(context).pop();
+                            await _updatePassword(currentPassword, newPassword, confirmPassword);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7012DA),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Actualizar'),
                         ),
                       ],
                     ),
@@ -310,7 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-Future<void> _updateField(String fieldKey, String newValue) async {
+  Future<void> _updateField(String fieldKey, String newValue) async {
   if (profile == null || isUpdating) return;
 
   setState(() {
@@ -437,6 +574,59 @@ Future<void> _updateField(String fieldKey, String newValue) async {
     }
   }
 }
+
+   Future<void> _updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
+    if (isUpdating) return;
+
+    setState(() {
+      isUpdating = true;
+    });
+
+    try {
+      await ProfileService.updatePassword(currentPassword, newPassword, confirmPassword);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contraseña actualizada correctamente'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = 'Error de conexión';
+        
+        try {
+          final errorString = e.toString();
+          if (errorString.contains('Exception: ')) {
+            final jsonString = errorString.substring(errorString.indexOf('{'));
+            final errorData = json.decode(jsonString);
+            
+            if (errorData['msg'] != null) {
+              errorMessage = errorData['msg'].toString();
+            }
+          }
+        } catch (parseError) {
+          errorMessage = 'Error al actualizar la contraseña';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            duration: const Duration(seconds: 3),
+            backgroundColor: const Color.fromARGB(152, 244, 67, 54),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+      }
+    }
+  }
 
   String _getGenderDisplay(String gender) {
     switch (gender) {
@@ -597,7 +787,14 @@ Future<void> _updateField(String fieldKey, String newValue) async {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const _EditableField(label: 'Contraseña', value: '********'),
+                        GestureDetector(
+                          onTap: isUpdating ? null : () => _showEditDialog(
+                            'Contraseña', 
+                            '', 
+                            'password'
+                          ),
+                          child: const _EditableField(label: 'Contraseña', value: '********'),
+                        ),
                         const SizedBox(height: 12),
                         GestureDetector(
                           onTap: isUpdating ? null : () => _showEditDialog(
