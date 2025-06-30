@@ -273,7 +273,7 @@ class _ClearPreferencesButton extends StatelessWidget {
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove('first-init-app');
-          
+         
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Boton de prueba para borrar shared preferences.'),

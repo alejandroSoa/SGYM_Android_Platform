@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/OAuthWebView.dart';
 import '../services/UserService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../network/NetworkService.dart';
+import 'dart:convert';
 
 class AuthException implements Exception {
   final String message;
@@ -57,5 +59,20 @@ class AuthService {
       await UserService.setUser(userData);
 
       return true;
+  }
+
+  static Future<void> updateToken() async {
+
+    final baseUrl = dotenv.env['AUTH_BASE_URL'];
+    final fullUrl = '$baseUrl/access/refresh';
+    
+    final response = await NetworkService.post(fullUrl);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+      } else {
+        throw Exception(response.body);
+      }
   }
 }

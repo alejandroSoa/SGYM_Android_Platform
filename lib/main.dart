@@ -13,12 +13,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
-  //Agregar icono de la app
   //Agregar evento para cuando tenga firsttime pero no token 
-  //Utilizar la pantalla de carga de flutter para inicializar la app
-  //Usar la pantalla de carga de profile para evitar caragar pantalla a no ser que esten los datos
+    //Linea 276 home screen cambiar eso a un logout y solo quite el token
+    //si tiene el token invalido actualizar en base a el servicio, mas no cerrarle o pedirle que vuelva a iniciar sesion
   //Agregar middleware conection para ajustar que en cada ruta mande token y verifique cada q realiza una peticion el status del token y actualizarlo si es necesario.
-  //Creacion de servicio singleton relacionado al token.
   WidgetsFlutterBinding.ensureInitialized();
   final isFirstTime = await InitializationService.isFirstTimeUser();
   runApp(MyApp(isFirstTime: isFirstTime));
