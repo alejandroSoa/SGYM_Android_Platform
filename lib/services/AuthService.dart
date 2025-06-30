@@ -24,7 +24,7 @@ class AuthService {
       final responseType = dotenv.env['OAUTH_RESPONSE_TYPE'] ?? 'token';
       final authBaseUrl = dotenv.env['AUTH_BASE_URL'];
 
-      final authUrl = Uri.https(
+      final authUrl = Uri.http(
         Uri.parse(authBaseUrl!).host,
         '/oauth/login',
         {
@@ -45,6 +45,8 @@ class AuthService {
       if (token == null || token.isEmpty) {
         throw AuthException("Autenticación cancelada o incompleta");
       }
+
+      print("[TOKEN_SET] Token guardado correctamente. $token");
 
       UserService.setToken(token);
       final userData = await UserService.fetchUser();

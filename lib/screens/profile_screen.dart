@@ -143,8 +143,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _ClearPreferencesButton(),
-                const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -270,50 +268,6 @@ class _EditableField extends StatelessWidget {
           ),
           const Icon(Icons.edit_note_rounded, color: Color.fromRGBO(122, 90, 249, 1)        
           )],
-      ),
-    );
-  }
-}
-
-class _ClearPreferencesButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      child: ElevatedButton(
-        onPressed: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('first-init-app');
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Preferencias borradas. Reinicia la app para ver el efecto.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.delete_forever, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
-              'Borrar Preferencias',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
