@@ -345,6 +345,12 @@ Future<void> _updateField(String fieldKey, String newValue) async {
           gender: newValue,
         );
         break;
+      case 'photoUrl':
+        updatedProfile = await ProfileService.updateProfile(
+          profile!,
+          photoUrl: newValue,
+        );
+        break;
     }
 
     if (updatedProfile != null) {
@@ -375,7 +381,6 @@ Future<void> _updateField(String fieldKey, String newValue) async {
       String errorMessage = 'Error de conexión';
       
       try {
-        // Extraer el JSON del error
         final errorString = e.toString();
         if (errorString.contains('Exception: ')) {
           final jsonString = errorString.substring(errorString.indexOf('{'));
@@ -384,7 +389,6 @@ Future<void> _updateField(String fieldKey, String newValue) async {
           if (errorData['data'] != null) {
             final fieldErrors = errorData['data'] as Map<String, dynamic>;
             
-            // Mapear fieldKey al nombre que usa la API
             String apiFieldKey;
             switch (fieldKey) {
               case 'fullName':
@@ -399,11 +403,13 @@ Future<void> _updateField(String fieldKey, String newValue) async {
               case 'gender':
                 apiFieldKey = 'gender';
                 break;
+              case 'photoUrl':
+                apiFieldKey = 'photo_url';
+                break;
               default:
                 apiFieldKey = fieldKey;
             }
             
-            // Obtener el mensaje específico para el campo que se está editando
             if (fieldErrors[apiFieldKey] != null) {
               errorMessage = fieldErrors[apiFieldKey].toString();
             } else if (errorData['msg'] != null) {
@@ -412,7 +418,6 @@ Future<void> _updateField(String fieldKey, String newValue) async {
           }
         }
       } catch (parseError) {
-        // Si no se puede parsear, mantener el mensaje por defecto
         errorMessage = 'Error al actualizar el campo';
       }
       
@@ -420,7 +425,7 @@ Future<void> _updateField(String fieldKey, String newValue) async {
         SnackBar(
           content: Text(errorMessage),
           duration: const Duration(seconds: 3),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color.fromARGB(152, 244, 67, 54),
         ),
       );
     }
@@ -468,15 +473,22 @@ Future<void> _updateField(String fieldKey, String newValue) async {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: profile!.photoUrl != null
-                        ? NetworkImage(profile!.photoUrl!)
-                        : null,
-                    backgroundColor: Colors.grey[400],
-                    child: profile!.photoUrl == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.white)
-                        : null,
+                  GestureDetector(
+                    onTap: isUpdating ? null : () => _showEditDialog(
+                      'URL de foto de perfil', 
+                      profile!.photoUrl ?? '', 
+                      'photoUrl'
+                    ),
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage: profile!.photoUrl != null
+                          ? NetworkImage(profile!.photoUrl!)
+                          : null,
+                      backgroundColor: Colors.grey[400],
+                      child: profile!.photoUrl == null
+                          ? const Icon(Icons.person, size: 60, color: Colors.white)
+                          : null,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -485,8 +497,9 @@ Future<void> _updateField(String fieldKey, String newValue) async {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    profile!.phone ?? '',
-                    style: const TextStyle(color: Colors.black54),
+                    profile!.phone != null && profile!.phone!.isNotEmpty 
+                        ? '+52 ${profile!.phone}' 
+                        : '',                    style: const TextStyle(color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
                   Container(
@@ -594,7 +607,9 @@ Future<void> _updateField(String fieldKey, String newValue) async {
                           ),
                           child: _EditableField(
                             label: 'Teléfono', 
-                            value: profile!.phone ?? ''
+                            value: profile!.phone != null && profile!.phone!.isNotEmpty 
+                                ? '+52 ${profile!.phone}' 
+                                : ''
                           ),
                         ),
                         const SizedBox(height: 150),
