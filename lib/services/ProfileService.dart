@@ -1,12 +1,13 @@
 import 'dart:convert';
 import '../interfaces/user/profile_interface.dart';
+import '../interfaces/user/qr_interface.dart';
 import 'UserService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../network/NetworkService.dart';
 
 class ProfileService {
 
-  static Future<Profile?> fetchProfile([int? userId]) async {
+  static Future<Profile?> fetchProfile() async {
     final User = await UserService.getUser();
 
     final idPath = await User?['id'];
@@ -56,7 +57,6 @@ class ProfileService {
   }
 
   static Future<void> updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
-    final User = await UserService.getUser();
     final baseUrl = dotenv.env['AUTH_BASE_URL'];
     final fullUrl = '$baseUrl/auth/change-password';
     
@@ -71,6 +71,24 @@ class ProfileService {
     if (response.statusCode != 200) {
       throw Exception(response.body);
     }
+  }
+
+  static Future<QrCode?> fetchQrCode() async {
+    final User = await UserService.getUser();
+
+    final idPath = await User?['id'];
+    final baseUrl = dotenv.env['AUTH_BASE_URL'];
+    final fullUrl = '$baseUrl/users/$idPath/qr';
+    
+    final response = await NetworkService.post(fullUrl);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final qr = QrCode.fromJson(data['data']);
+        return qr;
+      } else {
+        throw Exception(response.body);
+      }
   }
 
     //Probar funcionalidad
@@ -104,4 +122,6 @@ class ProfileService {
       return null;
     }
   }
+
+
 }

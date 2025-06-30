@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
-import '../services/QrService.dart';
 import 'dart:convert';
+import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,6 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Profile? profile;
   bool loading = true;
   bool isUpdating = false;
+  bool isLoadingQr = false;
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Scaffold(
           backgroundColor: Colors.black.withOpacity(0.5),
@@ -130,14 +131,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-    Future<void> _showPasswordDialog() async {
+  Future<void> _showPasswordDialog() async {
     final TextEditingController currentPasswordController = TextEditingController();
     final TextEditingController newPasswordController = TextEditingController();
     final TextEditingController confirmPasswordController = TextEditingController();
     
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Scaffold(
           backgroundColor: Colors.black.withOpacity(0.5),
@@ -265,18 +266,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _showGenderDialog(String currentGender) async {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return Scaffold(
           backgroundColor: Colors.black.withOpacity(0.5),
           body: SafeArea(
             child: Center(
               child: Container(
-                margin: const EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -285,8 +286,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Text(
                       'Seleccionar Género',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -299,24 +300,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _updateField('gender', 'M');
                             },
                             child: Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                               decoration: BoxDecoration(
                                 color: currentGender == 'M' 
                                     ? const Color(0xFF7012DA)
                                     : const Color(0xFFF2F2FF),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: currentGender == 'M' 
                                       ? const Color(0xFF7012DA)
                                       : Colors.grey[300]!,
-                                  width: 2,
+                                  width: 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
                                   Icon(
                                     Icons.male,
-                                    size: 40,
+                                    size: 24,
                                     color: currentGender == 'M' 
                                         ? Colors.white 
                                         : const Color(0xFF7012DA),
@@ -325,12 +326,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Text(
                                     'Masculino',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: currentGender == 'M' 
                                           ? Colors.white 
-                                          : Colors.black,
+                                          : Colors.black87,
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
@@ -345,24 +347,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _updateField('gender', 'F');
                             },
                             child: Container(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
                               decoration: BoxDecoration(
                                 color: currentGender == 'F' 
                                     ? const Color(0xFF7012DA)
                                     : const Color(0xFFF2F2FF),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                   color: currentGender == 'F' 
                                       ? const Color(0xFF7012DA)
                                       : Colors.grey[300]!,
-                                  width: 2,
+                                  width: 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
                                   Icon(
                                     Icons.female,
-                                    size: 40,
+                                    size: 24,
                                     color: currentGender == 'F' 
                                         ? Colors.white 
                                         : const Color(0xFF7012DA),
@@ -371,12 +373,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Text(
                                     'Femenino',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: currentGender == 'F' 
                                           ? Colors.white 
-                                          : Colors.black,
+                                          : Colors.black87,
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ],
                               ),
@@ -385,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -393,7 +396,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           onPressed: () => Navigator.of(context).pop(),
                           child: const Text(
                             'Cancelar',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -411,7 +417,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _showDateDialog(String currentDate) async {
     DateTime? selectedDate;
     
-    // Parsear la fecha actual si existe
     if (currentDate.isNotEmpty) {
       try {
         selectedDate = DateTime.parse(currentDate);
@@ -575,7 +580,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-   Future<void> _updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
+  Future<void> _updatePassword(String currentPassword, String newPassword, String confirmPassword) async {
     if (isUpdating) return;
 
     setState(() {
@@ -636,6 +641,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return 'Femenino';
       default:
         return gender;
+    }
+  }
+
+  Future<void> _showQrCode() async {
+    setState(() {
+      isLoadingQr = true;
+    });
+    //Hace bien la peticion pero no muestra el base64
+    try {
+      final qrData = await ProfileService.fetchQrCode();
+      if (qrData != null && mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (BuildContext context) {
+            return Scaffold(
+              backgroundColor: Colors.black.withOpacity(0.5),
+              body: SafeArea(
+                child: Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Tu Código QR',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: 
+                          Image.memory(
+                            base64Decode(qrData.qrImageBase64),
+                            width: 148,
+                            height: 148,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7012DA),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Cerrar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al generar el código QR'),
+              backgroundColor: Color.fromARGB(152, 244, 67, 54),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = 'Error al generar el código QR';
+        
+        try {
+          final errorString = e.toString();
+          if (errorString.contains('Exception: ')) {
+            final jsonString = errorString.substring(errorString.indexOf('{'));
+            final errorData = json.decode(jsonString);
+            
+            if (errorData['msg'] != null) {
+              errorMessage = errorData['msg'].toString();
+            }
+          }
+        } catch (parseError) {
+          errorMessage = 'Error de conexión';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            duration: const Duration(seconds: 3),
+            backgroundColor: const Color.fromRGBO(0, 0, 0, 1).withOpacity(0.3),
+
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingQr = false;
+        });
+      }
     }
   }
 
@@ -737,37 +858,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
-                    onTap: () async {
-                      if (profile == null) return;
-                      final qrData = await QrService.generateQr(profile!.userId);
-                      if (qrData != null && qrData['qr_image_base64'] != null && mounted) {
-                        showDialog(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text('Tu código QR'),
-                            content: Image.memory(
-                              base64Decode(
-                                qrData['qr_image_base64'].split(',').last,
+                    onTap: isUpdating || isLoadingQr ? null : _showQrCode,
+                    child: Stack(
+                      children: [
+                        const _OptionItem(
+                          title: 'QR',
+                          icon: Icons.qr_code_2_rounded,
+                          iconColor: Color(0xFF7012DA),
+                        ),
+                        if (isLoadingQr)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7012DA)),
+                                  ),
+                                ),
                               ),
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('Cerrar'),
-                              ),
-                            ],
                           ),
-                        );
-                      } else if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No se pudo generar el QR')),
-                        );
-                      }
-                    },
-                    child: const _OptionItem(
-                      title: 'QR',
-                      icon: Icons.qr_code_2_rounded,
-                      iconColor: Color(0xFF7012DA),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -818,7 +936,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             if (isUpdating)
               Container(
-                color: Colors.black.withOpacity(0.3),
+                color: const Color.fromRGBO(0, 0, 0, 1).withOpacity(0.3),
                 child: const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7012DA)),
