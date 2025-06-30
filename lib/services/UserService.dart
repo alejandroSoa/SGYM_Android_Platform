@@ -30,21 +30,30 @@ class UserService {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('user_data');
     if (userJson == null) return null;
-    return json.decode(userJson) as Map<String, dynamic>;
+    return json.decode(userJson) as Map<String, dynamic>?;
   }
 
-  static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
-    final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
+  final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
 
     final fullUrl = userId != null 
         ? '$baseUrl/users/${userId.toString()}'
         : '$baseUrl/users';
 
     final response = await NetworkService.get(fullUrl);
-  
+
     if (response.statusCode == 200) {
-        final userData = json.decode(response.body)['data'];
-        return userData;
+      final responseData = json.decode(response.body)['data'];
+      
+      if (responseData is List && responseData.isNotEmpty) {
+        return responseData.first as Map<String, dynamic>;
+      }
+      
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      }
+      
+      return null;
     } else {
       return null;
     }

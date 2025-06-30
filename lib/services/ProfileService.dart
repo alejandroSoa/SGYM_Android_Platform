@@ -33,8 +33,8 @@ class ProfileService {
     String? gender,
     String? photoUrl,
   }) async {
-    final User = await UserService.getUser();
-    final idPath = await User?['id'];
+    final user = await UserService.getUser();
+    final idPath = await user?['id'];
     final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
     final fullUrl = '$baseUrl/users/$idPath/profile';
     

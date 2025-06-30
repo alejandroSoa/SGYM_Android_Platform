@@ -13,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
+  //Agregar en resumen del dia congestion del gym, numero de notis/citas sin ver o nuevas
   //Agregar evento para cuando tenga firsttime pero no token 
     //Linea 276 home screen cambiar eso a un logout y solo quite el token
     //si tiene el token invalido actualizar en base a el servicio, mas no cerrarle o pedirle que vuelva a iniciar sesion
