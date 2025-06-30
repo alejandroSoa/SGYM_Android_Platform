@@ -25,35 +25,65 @@ class ProfileService {
       }
   }
 
+  static Future<Profile?> updateProfile(Profile currentProfile, {
+    String? fullName,
+    String? phone,
+    String? birthDate,
+    String? gender,
+    String? photoUrl,
+  }) async {
+    final User = await UserService.getUser();
+    final idPath = await User?['id'];
+    final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+    final fullUrl = '$baseUrl/users/$idPath/profile';
+    
+    final body = {
+      'full_name': fullName ?? currentProfile.fullName,
+      'phone': phone ?? currentProfile.phone,
+      'birth_date': birthDate ?? currentProfile.birthDate,
+      'gender': gender ?? currentProfile.gender,
+      'photo_url': photoUrl ?? currentProfile.photoUrl,
+    };
+
+    final response = await NetworkService.put(fullUrl, body: body);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return Profile.fromJson(data['data']);
+    } else {
+      throw Exception(response.body);
+    }
+  }
+
     //Probar funcionalidad
-    static Future<Profile?> createProfile({
-      required int userId,
-      required String fullName,
-      required String phone,
-      required String birthDate,
-      required String gender,
-      String? photoUrl,
-    }) async {
+  static Future<Profile?> createProfile({
+    required int userId,
+    required String fullName,
+    required String phone,
+    required String birthDate,
+    required String gender,
+    String? photoUrl,
+  }) async {
 
-      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
-      final fullUrl = '$baseUrl/users/profile';
+    final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+    final fullUrl = '$baseUrl/users/profile';
 
-      final body = {
-        'user_id': userId,
-        'full_name': fullName,
-        'phone': phone,
-        'birth_date': birthDate,
-        'gender': gender,
-        if (photoUrl != null) 'photo_url': photoUrl,
-      };
+    final body = {
+      'user_id': userId,
+      'full_name': fullName,
+      'phone': phone,
+      'birth_date': birthDate,
+      'gender': gender,
+      if (photoUrl != null) 'photo_url': photoUrl,
+    };
 
-      final response = await NetworkService.post(fullUrl, body: body);
+    final response = await NetworkService.post(fullUrl, body: body);
 
-      if (response.statusCode == 201) {
-        final data = json.decode(response.body);
-        return Profile.fromJson(data['data']);
-      } else {
-        return null;
-      }
+    if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+      return Profile.fromJson(data['data']);
+    } else {
+      return null;
+    }
   }
 }
