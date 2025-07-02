@@ -1,37 +1,29 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'SharedPreferencesService.dart';
 import 'dart:convert';
 import '../network/NetworkService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class UserService {
-  static const String _tokenKey = 'oauth-token';
-
   static Future<void> setToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await SharedPreferencesService.setToken(token);
   }
 
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return await SharedPreferencesService.getToken();
   }
 
   static Future<void> clearToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
+    await SharedPreferencesService.clearToken();
   }
 
   static Future<void> setUser(Map<String, dynamic> user) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_data', json.encode(user));
+    await SharedPreferencesService.setUser(user);
   }
 
   static Future<Map<String, dynamic>?> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString('user_data');
-    if (userJson == null) return null;
-    return json.decode(userJson) as Map<String, dynamic>?;
+    return await SharedPreferencesService.getUser();
   }
+
 
 static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
   final baseUrl = dotenv.env['BUSINESS_BASE_URL'];

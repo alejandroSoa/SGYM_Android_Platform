@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../services/ProfileService.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
