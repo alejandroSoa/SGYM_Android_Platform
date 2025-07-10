@@ -87,6 +87,7 @@ class AuthService {
       }
       
       final userRoleId = userData['role_id'];
+      print("[ROLE_ID]: $userRoleId");
       // final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
       // final fullUrl = '$baseUrl/roles/$userRoleId';
       // print("[ACCESS_BY_ROLE] Verificando acceso por rol: $fullUrl");
@@ -97,6 +98,7 @@ class AuthService {
       // print("Response body: ${response.body}");
 
       if (!allowedRoles.contains(userRoleId)) {
+        print("No está permitido el acceso a la aplicación desde este dispositivo.");
         throw AuthException("Acceso denegado: Tu rol no tiene acceso a la aplicación desde este dispositivo.");
       }
       
@@ -106,5 +108,20 @@ class AuthService {
       return false;
     }
   }
+
+  static Future<int?> getCurrentUserRole() async {
+    try {
+      final userData = await UserService.getUser();
+      if (userData == null) return null;
+      
+      final userRoleId = userData['role_id'];
+      print("[GET_CURRENT_ROLE] Role ID: $userRoleId");
+      return userRoleId is int ? userRoleId : int.tryParse(userRoleId.toString());
+    } catch (e) {
+      print("[GET_CURRENT_ROLE] Error: $e");
+      return null;
+    }
+  }
+
 
 }

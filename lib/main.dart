@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:sgym/screens/diets_screen.dart';
-import 'package:sgym/screens/home_screen.dart';
-import 'package:sgym/screens/appointments_screen.dart';
-import 'package:sgym/screens/routines_screen.dart';
-import 'package:sgym/screens/profile_screen.dart';
-import 'screens/notifications_screen.dart';
+// import 'package:sgym/screens/diets_screen.dart';
+// import 'package:sgym/screens/home_screen.dart';
+// import 'package:sgym/screens/appointments_screen.dart';
+// import 'package:sgym/screens/routines_screen.dart';
+// import 'package:sgym/screens/profile_screen.dart';
+// import 'screens/notifications_screen.dart';
 import 'screens/first_time_screen.dart';
 import 'widgets/custom_top_bar.dart';
 import 'config/ScreenConfig.dart';
 import 'services/InitializationService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/AuthService.dart';
+import 'services/RoleConfigService.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -54,19 +56,63 @@ class MainLayout extends StatefulWidget {
   State<MainLayout> createState() => _MainLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
-  int currentIndex = 0;  final List<Screenconfig> viewConfigs = [
-    Screenconfig(view: const HomeScreen()), 
-    Screenconfig(view: const AppointmentsScreen(), title: 'Citas', showBackButton: true, showProfileIcon: false, showNotificationIcon: false),
-    Screenconfig(view: const DietsScreen(), title: 'Dietas', showBackButton: true, showProfileIcon: false, showNotificationIcon: false),
-    Screenconfig(view: const RoutinesScreen(), title: 'Rutinas', showBackButton: true, showProfileIcon: false, showNotificationIcon: false),
-    Screenconfig(view: const ProfileScreen(), title: 'Perfil', showBackButton: true, showProfileIcon: false, showNotificationIcon: false, showBottomNav: false),
-    Screenconfig(view: const NotificationsScreen(), title: 'Notificaciones', showBackButton: true, showProfileIcon: false, showNotificationIcon: false, showBottomNav: false),
-  ];
+// ...existing code...
 
+class _MainLayoutState extends State<MainLayout> {
+  int currentIndex = 0;
+  List<Screenconfig> viewConfigs = [];
+  List<Map<String, dynamic>> navItems = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoleBasedConfig();
+  }
+
+  Future<void> _loadRoleBasedConfig() async {
+    try {
+      final userRole = await AuthService.getCurrentUserRole();
+      print("[MAIN_LAYOUT] User role: $userRole");
+      
+      if (userRole != null) {
+        setState(() {
+          viewConfigs = RoleConfigService.getScreensForRole(userRole);
+          navItems = RoleConfigService.getNavItemsForRole(userRole);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          viewConfigs = RoleConfigService.getScreensForRole(0);
+          navItems = RoleConfigService.getNavItemsForRole(0);
+          isLoading = false;
+        });
+      }
+      
+      print("[MAIN_LAYOUT] NavItems: $navItems");
+      print("[MAIN_LAYOUT] ViewConfigs length: ${viewConfigs.length}");
+    } catch (e) {
+      print("[MAIN_LAYOUT] Error loading role config: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (viewConfigs.isEmpty) {
+      return const Scaffold(
+        body: Center(child: Text('Error: No se pudieron cargar las pantallas')),
+      );
+    }
+
     final config = viewConfigs[currentIndex];
 
     return Scaffold(
@@ -82,8 +128,8 @@ class _MainLayoutState extends State<MainLayout> {
               showProfileIcon: config.showProfileIcon,
               showNotificationIcon: config.showNotificationIcon,
               onBack: () => setState(() => currentIndex = 0),
-              onProfileTap: () => setState(() => currentIndex = 4),
-              onNotificationsTap: () => setState(() => currentIndex = 5),
+              onProfileTap: () => setState(() => currentIndex = viewConfigs.length - 2),
+              onNotificationsTap: () => setState(() => currentIndex = viewConfigs.length - 1),
             ),
             Expanded(child: config.view),
           ],
@@ -99,17 +145,17 @@ class _MainLayoutState extends State<MainLayout> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,                
-                children: [
-                  _buildNavButton(index: 0, label: 'Inicio', icon: Icons.home),
-                  _buildNavButton(index: 1, label: 'Citas', icon: Icons.calendar_today),
-                  _buildNavButton(index: 2, label: 'Dietas', icon: Icons.restaurant),
-                  _buildNavButton(index: 3, label: 'Rutinas', icon: Icons.fitness_center),
-                ],
+                children: navItems.map((item) => _buildNavButton(
+                  index: item['index'],
+                  label: item['label'],
+                  icon: item['icon'],
+                )).toList(),
               ),
             )
           : null,
     );
   }
+
   Widget _buildNavButton({required int index, required String label, IconData? icon}) {
     final isSelected = currentIndex == index;
     double screenWidth = MediaQuery.of(context).size.width;
