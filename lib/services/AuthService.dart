@@ -75,4 +75,36 @@ class AuthService {
         throw Exception(response.body);
       }
   }
+
+  static Future<bool> accessByRole() async {
+    final allowedRoles = [3, 5, 6];
+    // final allowedRoles = ["trainer", "user", "nutritionist"];
+    try {
+      final userData = await UserService.getUser();
+      
+      if (userData == null) {
+        throw AuthException("Usuario no autenticado");
+      }
+      
+      final userRoleId = userData['role_id'];
+      // final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+      // final fullUrl = '$baseUrl/roles/$userRoleId';
+      // print("[ACCESS_BY_ROLE] Verificando acceso por rol: $fullUrl");
+      
+      // final response = await NetworkService.get(fullUrl);
+      // final responseData = json.decode(response.body);
+      // final roleName = responseData['name'].toString();
+      // print("Response body: ${response.body}");
+
+      if (!allowedRoles.contains(userRoleId)) {
+        throw AuthException("Acceso denegado: Tu rol no tiene acceso a la aplicación desde este dispositivo.");
+      }
+      
+      return true;
+    } catch (e) {
+      print("[ACCESS_BY_ROLE] Error: $e");
+      return false;
+    }
+  }
+
 }

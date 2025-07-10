@@ -504,6 +504,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(
             content: Text('Campo actualizado correctamente'),
             duration: Duration(seconds: 2),
+            backgroundColor: Color(0xFF019E83),
           ),
         );
       }
@@ -513,6 +514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(
             content: Text('Error al actualizar el campo'),
             duration: Duration(seconds: 2),
+            backgroundColor: Color.fromARGB(152, 244, 67, 54),
           ),
         );
       }
@@ -594,6 +596,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(
             content: Text('Contraseña actualizada correctamente'),
             duration: Duration(seconds: 2),
+            backgroundColor: Color(0xFF019E83),
           ),
         );
       }

@@ -30,10 +30,29 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
         .then((value) {
           return value;
         });
-      authResult = "Autenticación completada.\nResultado: $success";
+
+        if (success) {
+          print("[FIRST_TIME] Autenticación exitosa, verificando rol...");
+
+          bool hasAccess = await AuthService.accessByRole();
+          
+          if (hasAccess) {
+            authResult = "Autenticación completada y rol verificado exitosamente.";
+            print("[FIRST_TIME] Usuario tiene acceso con el rol requerido");
+          } else {
+            success = false;
+            authResult = "Autenticación exitosa pero sin permisos de acceso.";
+            print("[FIRST_TIME] Usuario no tiene el rol requerido");
+          }
+        } else {
+          authResult = "Autenticación fallida.";
+        }
+      // authResult = "Autenticación completada.\nResultado: $success";
     } catch (e) {
       authResult = "$e";
     }
+
+
 
     setState(() {
       _isAuthenticating = false; 
