@@ -11,68 +11,83 @@ class CustomTopBar extends StatelessWidget {
   final bool showNotificationIcon;
   final VoidCallback? onNotificationsTap;
 
-const CustomTopBar({
-  super.key,
-  required this.username,
-  required this.profileImage,
-  this.currentViewTitle,
-  this.showBackButton = false,
-  this.showProfileIcon = true,
-  this.showNotificationIcon = true,
-  this.onBack,
-  this.onProfileTap,
-  this.onNotificationsTap,
-});
+  const CustomTopBar({
+    super.key,
+    required this.username,
+    required this.profileImage,
+    this.currentViewTitle,
+    this.showBackButton = false,
+    this.showProfileIcon = true,
+    this.showNotificationIcon = true,
+    this.onBack,
+    this.onProfileTap,
+    this.onNotificationsTap,
+  });
 
-@override
+  @override
   Widget build(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        showBackButton
-            ? GestureDetector(
-                onTap: onBack,
-                child: Container(
-                  height: 52,
-                  width: 52,
-                  decoration: BoxDecoration(
-                    color: const Color.fromRGBO(244, 242, 255, 1),
-                    shape: BoxShape.circle,
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Lado izquierdo
+          showBackButton
+              ? GestureDetector(
+                  onTap: onBack,
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_back, size: 20),
                   ),
-                  child: const Icon(Icons.arrow_back, size: 20, color: Colors.black54),
+                )
+              : Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Hello,',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      Text(
+                        username,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hello,',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w400,
-                    ),
+          
+          // Centro - Título
+          if (currentViewTitle != null && showBackButton)
+            Expanded(
+              child: Center(
+                child: Text(
+                  currentViewTitle!,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  Text(
-                    username,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-        if (currentViewTitle != null && showBackButton)
-          Text(
-            currentViewTitle!,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
             ),
-          ),
+          
+          // Lado derecho - Iconos
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               if (showNotificationIcon)
                 GestureDetector(
@@ -81,23 +96,55 @@ const CustomTopBar({
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: Color(0xFFF2F2FF),
+                      color: const Color(0xFFF2F2FF),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.notifications_none, color: Colors.black54, size: 22),
+                    child: const Icon(Icons.notifications_none, size: 20),
                   ),
                 ),
-              const SizedBox(width: 12),
-              showProfileIcon
-                  ? GestureDetector(
-                      onTap: onProfileTap,
-                      child: CircleAvatar(
-                        backgroundImage: AssetImage(profileImage),
-                        radius: 20,
-                        backgroundColor: Color(0xFFF2F2FF),
-                      ),
-                    )
-                  : const SizedBox(width: 35),
+              if (showNotificationIcon && showProfileIcon)
+                const SizedBox(width: 8),
+              if (showProfileIcon)
+                GestureDetector(
+                  onTap: onProfileTap,
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2F2FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: profileImage.startsWith('http')
+                          ? Image.network(
+                              profileImage,
+                              fit: BoxFit.cover,
+                              width: 40,
+                              height: 40,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.person, size: 20);
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                );
+                              },
+                            )
+                          : (profileImage != 'assets/profile.png'
+                              ? Image.asset(
+                                  profileImage,
+                                  fit: BoxFit.cover,
+                                  width: 40,
+                                  height: 40,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.person, size: 20);
+                                  },
+                                )
+                              : const Icon(Icons.person, size: 20)),
+                    ),
+                  ),
+                ),
             ],
           ),
         ],

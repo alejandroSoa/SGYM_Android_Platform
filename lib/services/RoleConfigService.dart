@@ -15,8 +15,8 @@ class RoleConfigService {
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const RoutinesScreen()),
-          Screenconfig(view: const ProfileScreen(), showBottomNav: false),
-          Screenconfig(view: const NotificationsScreen(), showBottomNav: false),
+          Screenconfig(view: const ProfileScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
         ];
       
       case 5: // User - TODOS
@@ -25,8 +25,8 @@ class RoleConfigService {
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
           Screenconfig(view: const RoutinesScreen()),
-          Screenconfig(view: const ProfileScreen(), showBottomNav: false),
-          Screenconfig(view: const NotificationsScreen(), showBottomNav: false),
+          Screenconfig(view: const ProfileScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
         ];
       
       case 6: // Nutritionist - SIN RUTINAS
@@ -34,8 +34,8 @@ class RoleConfigService {
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
-          Screenconfig(view: const ProfileScreen(), showBottomNav: false),
-          Screenconfig(view: const NotificationsScreen(), showBottomNav: false),
+          Screenconfig(view: const ProfileScreen(), showBackButton:true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
         ];
       
       default:

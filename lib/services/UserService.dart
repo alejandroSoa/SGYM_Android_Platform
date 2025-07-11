@@ -33,6 +33,7 @@ static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
         : '$baseUrl/users';
 
     final response = await NetworkService.get(fullUrl);
+    print("[RESPONSE]: ${response.statusCode} - ${response.body}");
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body)['data'];
@@ -46,7 +47,11 @@ static Future<Map<String, dynamic>?> fetchUser([int? userId]) async {
       }
       
       return null;
-    } else {
+    } else if (response.statusCode == 401) {
+      final errorMessage = "Usuario no accesible desde esta plataforma";
+      throw Exception(errorMessage);
+    }
+    else {
       return null;
     }
   }

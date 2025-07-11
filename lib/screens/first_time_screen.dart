@@ -41,7 +41,7 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
             print("[FIRST_TIME] Usuario tiene acceso con el rol requerido");
           } else {
             success = false;
-            authResult = "Autenticación exitosa pero sin permisos de acceso.";
+            authResult = "Usuario no accesible desde esta plataforma.";
             print("[FIRST_TIME] Usuario no tiene el rol requerido");
           }
         } else {

@@ -12,6 +12,8 @@ import 'services/InitializationService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/AuthService.dart';
 import 'services/RoleConfigService.dart';
+import 'services/UserService.dart';
+import 'services/ProfileService.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -63,11 +65,33 @@ class _MainLayoutState extends State<MainLayout> {
   List<Screenconfig> viewConfigs = [];
   List<Map<String, dynamic>> navItems = [];
   bool isLoading = true;
+  String userProfileImage = 'assets/profile.png';
+  String username = 'Usuario';
 
   @override
   void initState() {
     super.initState();
     _loadRoleBasedConfig();
+    _loadAllData();
+  }
+
+  Future<void> _loadAllData() async {
+    try {
+      // Cargar datos de configuración y usuario en paralelo
+      await Future.wait([
+        _loadRoleBasedConfig(),
+        _loadUserData(),
+      ]);
+    } catch (e) {
+      print("[MAIN_LAYOUT] Error loading data: $e");
+    } finally {
+      // Solo marcar como cargado cuando ambos procesos terminen
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadRoleBasedConfig() async {
@@ -76,85 +100,104 @@ class _MainLayoutState extends State<MainLayout> {
       print("[MAIN_LAYOUT] User role: $userRole");
       
       if (userRole != null) {
-        setState(() {
-          viewConfigs = RoleConfigService.getScreensForRole(userRole);
-          navItems = RoleConfigService.getNavItemsForRole(userRole);
-          isLoading = false;
-        });
+        viewConfigs = RoleConfigService.getScreensForRole(userRole);
+        navItems = RoleConfigService.getNavItemsForRole(userRole);
       } else {
-        setState(() {
-          viewConfigs = RoleConfigService.getScreensForRole(0);
-          navItems = RoleConfigService.getNavItemsForRole(0);
-          isLoading = false;
-        });
+        viewConfigs = RoleConfigService.getScreensForRole(0);
+        navItems = RoleConfigService.getNavItemsForRole(0);
       }
       
       print("[MAIN_LAYOUT] NavItems: $navItems");
       print("[MAIN_LAYOUT] ViewConfigs length: ${viewConfigs.length}");
     } catch (e) {
       print("[MAIN_LAYOUT] Error loading role config: $e");
-      setState(() {
-        isLoading = false;
-      });
+      // Configuración por defecto en caso de error
+      viewConfigs = RoleConfigService.getScreensForRole(0);
+      navItems = RoleConfigService.getNavItemsForRole(0);
+    }
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Obtener perfil del usuario
+      final profile = await ProfileService.fetchProfile();
+      
+      if (profile != null) {
+          print("[PROFILE DATA]: ${profile.fullName}");
+          print("[PROFILE DATA]: ${profile.photoUrl}");
+
+          // Actualizar las variables sin setState aquí
+          userProfileImage = profile.photoUrl ?? 'assets/profile.png';
+          username = profile.fullName;
+      }
+    } catch (e) {
+      print("[MAIN_LAYOUT] Error loading user data: $e");
+      // Mantener valores por defecto en caso de error
+      userProfileImage = 'assets/profile.png';
+      username = 'Usuario';
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (viewConfigs.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text('Error: No se pudieron cargar las pantallas')),
-      );
-    }
-
-    final config = viewConfigs[currentIndex];
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            CustomTopBar(
-              username: 'Alejandro',
-              profileImage: 'assets/profile.png',
-              currentViewTitle: config.title,
-              showBackButton: config.showBackButton,
-              showProfileIcon: config.showProfileIcon,
-              showNotificationIcon: config.showNotificationIcon,
-              onBack: () => setState(() => currentIndex = 0),
-              onProfileTap: () => setState(() => currentIndex = viewConfigs.length - 2),
-              onNotificationsTap: () => setState(() => currentIndex = viewConfigs.length - 1),
-            ),
-            Expanded(child: config.view),
-          ],
-        ),
-      ),
-      bottomNavigationBar: config.showBottomNav
-          ? Container(
-              margin: const EdgeInsets.only(bottom: 25, left: 15, right: 15),
-              height: 80,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,                
-                children: navItems.map((item) => _buildNavButton(
-                  index: item['index'],
-                  label: item['label'],
-                  icon: item['icon'],
-                )).toList(),
-              ),
-            )
-          : null,
+Widget build(BuildContext context) {
+  if (isLoading) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
+
+  if (viewConfigs.isEmpty) {
+    return const Scaffold(
+      body: Center(child: Text('Error: No se pudieron cargar las pantallas')),
+    );
+  }
+
+  final config = viewConfigs[currentIndex];
+
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: SafeArea(
+      child: Column(
+        children: [
+          // TopBar sin SizedBox wrapper
+          CustomTopBar(
+            username: username,
+            profileImage: userProfileImage,
+            currentViewTitle: config.title,
+            showBackButton: config.showBackButton,
+            showProfileIcon: config.showProfileIcon,
+            showNotificationIcon: config.showNotificationIcon,
+            onBack: () => setState(() => currentIndex = 0),
+            onProfileTap: () => setState(() => currentIndex = viewConfigs.length - 2),
+            onNotificationsTap: () => setState(() => currentIndex = viewConfigs.length - 1),
+          ),
+          // Contenido principal
+          Expanded(
+            child: config.view,
+          ),
+        ],
+      ),
+    ),
+    bottomNavigationBar: config.showBottomNav
+        ? Container(
+            margin: const EdgeInsets.only(bottom: 25, left: 15, right: 15),
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,                
+              children: navItems.map((item) => _buildNavButton(
+                index: item['index'],
+                label: item['label'],
+                icon: item['icon'],
+              )).toList(),
+            ),
+          )
+        : null,
+  );
+}
 
   Widget _buildNavButton({required int index, required String label, IconData? icon}) {
     final isSelected = currentIndex == index;

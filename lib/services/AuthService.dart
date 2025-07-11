@@ -49,16 +49,28 @@ class AuthService {
       }
 
       print("[TOKEN_SET] Token guardado correctamente. $token");
-
+      print("[TOKEN_SET] Token guardado correctamente. $token");
+      
       UserService.setToken(token);
-      final userData = await UserService.fetchUser();
-      if (userData == null) {
-        UserService.clearToken();
-        throw AuthException("Inicie sesion mas tarde.");
-      }
-      await UserService.setUser(userData);
 
-      return true;
+      try {
+        final userData = await UserService.fetchUser();
+        if (userData == null) {
+          UserService.clearToken();
+          throw AuthException("No se pudo obtener información del usuario.");
+        }
+        await UserService.setUser(userData);
+        return true;
+      } catch (e) {
+        print("[AUTH ERROR]: $e");
+        UserService.clearToken();
+
+        if (e.toString().contains('Exception:')) {
+          throw AuthException(e.toString().replaceFirst('Exception: ', ''));
+        } else {
+          throw AuthException("Error de autenticación. Inténtalo más tarde.");
+        }
+      }
   }
 
   static Future<void> updateToken() async {
