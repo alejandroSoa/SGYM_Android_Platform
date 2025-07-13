@@ -14,14 +14,46 @@ class ExercisesScreen extends StatefulWidget {
 class _ExercisesScreenState extends State<ExercisesScreen> {
   bool isLoading = true;
   String? errorMessage;
+  bool isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   // Lista de ejercicios que se cargará desde la API
   List<Exercise> exercisesList = [];
+  List<Exercise> filteredExercisesList = [];
 
   @override
   void initState() {
     super.initState();
     _loadExercises();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    _filterExercises(_searchController.text);
+  }
+
+  void _filterExercises(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredExercisesList = exercisesList;
+      } else {
+        filteredExercisesList = exercisesList.where((exercise) {
+          final searchQuery = query.toLowerCase();
+          return exercise.name.toLowerCase().contains(searchQuery) ||
+              exercise.description.toLowerCase().contains(searchQuery) ||
+              exercise.equipmentType.displayName.toLowerCase().contains(searchQuery);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _loadExercises() async {
@@ -59,6 +91,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
         setState(() {
           exercisesList = loadedExercises;
+          filteredExercisesList = loadedExercises;
           isLoading = false;
         });
 
@@ -215,60 +248,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     }
   }
 
-  Future<void> _deleteExercise(int id) async {
-    try {
-      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
-      final fullUrl = '$baseUrl/exercises/$id';
-
-      print("[EXERCISES_SCREEN] Eliminando ejercicio en: $fullUrl");
-
-      final response = await NetworkService.delete(fullUrl);
-
-      print(
-        "[EXERCISES_SCREEN] Delete Response status: ${response.statusCode}",
-      );
-      print("[EXERCISES_SCREEN] Delete Response body: ${response.body}");
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        // Recargar la lista de ejercicios
-        await _loadExercises();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ejercicio eliminado exitosamente'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al eliminar ejercicio: ${response.statusCode}',
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      print("[EXERCISES_SCREEN] Error deleting exercise: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error de conexión: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
   Widget _buildExercisesContent() {
     if (isLoading) {
       return const Center(
@@ -330,11 +309,28 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       );
     }
 
+    if (filteredExercisesList.isEmpty && _searchController.text.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No se encontraron ejercicios\nque coincidan con "${_searchController.text}"',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: exercisesList.length,
+      itemCount: filteredExercisesList.length,
       itemBuilder: (context, index) {
-        final exercise = exercisesList[index];
+        final exercise = filteredExercisesList[index];
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -395,13 +391,42 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
-          'Ejercicios',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        title: isSearching
+            ? TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar ejercicios...',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+                autofocus: true,
+              )
+            : const Text(
+                'Ejercicios',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              ),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                if (isSearching) {
+                  isSearching = false;
+                  _searchController.clear();
+                  _filterExercises('');
+                } else {
+                  isSearching = true;
+                  _searchFocusNode.requestFocus();
+                }
+              });
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -503,10 +528,18 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            _showDeleteConfirmation(context, exercise);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${exercise.name} agregado a tu rutina',
+                                ),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: const Color(0xFF6366F1),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -514,7 +547,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Eliminar',
+                            'Agregar a rutina',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -523,39 +556,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${exercise.name} agregado a tu rutina',
-                            ),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Agregar a rutina',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -782,37 +782,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ],
             );
           },
-        );
-      },
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context, Exercise exercise) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirmar eliminación'),
-          content: Text(
-            '¿Estás seguro de que quieres eliminar el ejercicio "${exercise.name}"?\n\nEsta acción no se puede deshacer.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _deleteExercise(exercise.id);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Eliminar'),
-            ),
-          ],
         );
       },
     );
