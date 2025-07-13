@@ -14,30 +14,66 @@ class RoleConfigService {
         return [
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
-          Screenconfig(view: const RoutinesScreen()),
-          Screenconfig(view: const ProfileScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
-          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(view: const RoutinesScreen(showExerciseButton: true)),
+          Screenconfig(
+            view: const ProfileScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
+          Screenconfig(
+            view: const NotificationsScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
         ];
-      
+
       case 5: // User - TODOS
         return [
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
           Screenconfig(view: const RoutinesScreen()),
-          Screenconfig(view: const ProfileScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
-          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(
+            view: const ProfileScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
+          Screenconfig(
+            view: const NotificationsScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
         ];
-      
+
       case 6: // Nutritionist - SIN RUTINAS
         return [
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
-          Screenconfig(view: const ProfileScreen(), showBackButton:true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
-          Screenconfig(view: const NotificationsScreen(), showBackButton: true, showBottomNav: false, showProfileIcon: false, showNotificationIcon: false),
+          Screenconfig(
+            view: const ProfileScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
+          Screenconfig(
+            view: const NotificationsScreen(),
+            showBackButton: true,
+            showBottomNav: false,
+            showProfileIcon: false,
+            showNotificationIcon: false,
+          ),
         ];
-      
+
       default:
         return [
           Screenconfig(view: const HomeScreen()),
@@ -45,7 +81,7 @@ class RoleConfigService {
         ];
     }
   }
-  
+
   static List<Map<String, dynamic>> getNavItemsForRole(int roleId) {
     switch (roleId) {
       case 3: // Trainer - SIN DIETAS
@@ -54,7 +90,7 @@ class RoleConfigService {
           {'index': 1, 'label': 'Citas', 'icon': Icons.calendar_today},
           {'index': 2, 'label': 'Rutinas', 'icon': Icons.fitness_center},
         ];
-      
+
       case 5: // User - TODOS
         return [
           {'index': 0, 'label': 'Inicio', 'icon': Icons.home},
@@ -62,14 +98,14 @@ class RoleConfigService {
           {'index': 2, 'label': 'Dietas', 'icon': Icons.restaurant},
           {'index': 3, 'label': 'Rutinas', 'icon': Icons.fitness_center},
         ];
-      
+
       case 6: // Nutritionist - SIN RUTINAS
         return [
           {'index': 0, 'label': 'Inicio', 'icon': Icons.home},
           {'index': 1, 'label': 'Citas', 'icon': Icons.calendar_today},
           {'index': 2, 'label': 'Dietas', 'icon': Icons.restaurant},
         ];
-      
+
       default:
         return [
           {'index': 0, 'label': 'Inicio', 'icon': Icons.home},
