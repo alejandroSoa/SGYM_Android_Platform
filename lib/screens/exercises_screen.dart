@@ -95,8 +95,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       final body = {
         'name': name,
         'description': description,
-        'equipmentType': equipmentType.value,
-        'videoUrl': videoUrl,
+        'equipment_type': equipmentType.value,
+        'video_url': videoUrl,
       };
 
       print("[EXERCISES_SCREEN] Body del POST: $body");
@@ -134,6 +134,75 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       }
     } catch (e) {
       print("[EXERCISES_SCREEN] Error creating exercise: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateExercise({
+    required int id,
+    required String name,
+    required String description,
+    required EquipmentType equipmentType,
+    required String videoUrl,
+  }) async {
+    try {
+      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+      final fullUrl = '$baseUrl/exercises/$id';
+
+      print("[EXERCISES_SCREEN] Actualizando ejercicio en: $fullUrl");
+
+      final body = {
+        'name': name,
+        'description': description,
+        'equipment_type': equipmentType.value,
+        'video_url': videoUrl,
+      };
+
+      print("[EXERCISES_SCREEN] Body del PUT: $body");
+
+      final response = await NetworkService.put(fullUrl, body: body);
+
+      print(
+        "[EXERCISES_SCREEN] Update Response status: ${response.statusCode}",
+      );
+      print("[EXERCISES_SCREEN] Update Response body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        // Recargar la lista de ejercicios
+        await _loadExercises();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ejercicio actualizado exitosamente'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error al actualizar ejercicio: ${response.statusCode}',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("[EXERCISES_SCREEN] Error updating exercise: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -350,37 +419,64 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${exercise.name} agregado a tu rutina',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _showEditExerciseDialog(context, exercise);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          child: const Text(
+                            'Editar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text(
-                        'Agregar a mi rutina',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${exercise.name} agregado a tu rutina',
+                                ),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Agregar a rutina',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -491,6 +587,118 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Crear'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditExerciseDialog(BuildContext context, Exercise exercise) {
+    final nameController = TextEditingController(text: exercise.name);
+    final descriptionController = TextEditingController(
+      text: exercise.description,
+    );
+    final videoUrlController = TextEditingController(text: exercise.videoUrl);
+    EquipmentType selectedEquipmentType = exercise.equipmentType;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Editar Ejercicio'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre del ejercicio',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<EquipmentType>(
+                      value: selectedEquipmentType,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de equipamiento',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: EquipmentType.values.map((type) {
+                        return DropdownMenuItem<EquipmentType>(
+                          value: type,
+                          child: Text(type.displayName),
+                        );
+                      }).toList(),
+                      onChanged: (EquipmentType? value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedEquipmentType = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: videoUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL del video (opcional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty ||
+                        descriptionController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Por favor completa los campos obligatorios',
+                          ),
+                          backgroundColor: Colors.orange,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(context);
+
+                    await _updateExercise(
+                      id: exercise.id,
+                      name: nameController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      equipmentType: selectedEquipmentType,
+                      videoUrl: videoUrlController.text.trim(),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Actualizar'),
                 ),
               ],
             );
