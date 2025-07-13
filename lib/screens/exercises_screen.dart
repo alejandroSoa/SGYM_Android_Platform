@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:convert';
-import '../network/NetworkService.dart';
 import '../interfaces/exercises/exercise_interface.dart';
+import '../services/ExerciseService.dart';
 
 class ExercisesScreen extends StatefulWidget {
   const ExercisesScreen({super.key});
@@ -43,16 +41,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   void _filterExercises(String query) {
     setState(() {
-      if (query.isEmpty) {
-        filteredExercisesList = exercisesList;
-      } else {
-        filteredExercisesList = exercisesList.where((exercise) {
-          final searchQuery = query.toLowerCase();
-          return exercise.name.toLowerCase().contains(searchQuery) ||
-              exercise.description.toLowerCase().contains(searchQuery) ||
-              exercise.equipmentType.displayName.toLowerCase().contains(searchQuery);
-        }).toList();
-      }
+      filteredExercisesList = ExerciseService.filterExercises(
+        exercisesList,
+        query,
+      );
     });
   }
 
@@ -63,51 +55,16 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         errorMessage = null;
       });
 
-      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
-      final fullUrl = '$baseUrl/exercises';
+      final exercises = await ExerciseService.getExercises();
 
-      print("[EXERCISES_SCREEN] Cargando ejercicios desde: $fullUrl");
-
-      final response = await NetworkService.get(fullUrl);
-
-      print("[EXERCISES_SCREEN] Response status: ${response.statusCode}");
-      print("[EXERCISES_SCREEN] Response body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final exercisesData = data['data'] ?? data;
-
-        List<Exercise> loadedExercises = [];
-
-        if (exercisesData is List) {
-          loadedExercises = exercisesData
-              .map((exerciseData) => Exercise.fromJson(exerciseData))
-              .toList();
-        } else if (exercisesData is Map) {
-          loadedExercises = [
-            Exercise.fromJson(exercisesData.cast<String, dynamic>()),
-          ];
-        }
-
-        setState(() {
-          exercisesList = loadedExercises;
-          filteredExercisesList = loadedExercises;
-          isLoading = false;
-        });
-
-        print(
-          "[EXERCISES_SCREEN] Ejercicios cargados: ${exercisesList.length}",
-        );
-      } else {
-        setState(() {
-          errorMessage = 'Error al cargar ejercicios: ${response.statusCode}';
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("[EXERCISES_SCREEN] Error: $e");
       setState(() {
-        errorMessage = 'Error de conexión: $e';
+        exercisesList = exercises;
+        filteredExercisesList = exercises;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
         isLoading = false;
       });
     }
@@ -120,57 +77,30 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     required String videoUrl,
   }) async {
     try {
-      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
-      final fullUrl = '$baseUrl/exercises';
-
-      print("[EXERCISES_SCREEN] Creando ejercicio en: $fullUrl");
-
-      final body = {
-        'name': name,
-        'description': description,
-        'equipment_type': equipmentType.value,
-        'video_url': videoUrl,
-      };
-
-      print("[EXERCISES_SCREEN] Body del POST: $body");
-
-      final response = await NetworkService.post(fullUrl, body: body);
-
-      print(
-        "[EXERCISES_SCREEN] Create Response status: ${response.statusCode}",
+      await ExerciseService.createExercise(
+        name: name,
+        description: description,
+        equipmentType: equipmentType,
+        videoUrl: videoUrl,
       );
-      print("[EXERCISES_SCREEN] Create Response body: ${response.body}");
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Recargar la lista de ejercicios
-        await _loadExercises();
+      // Recargar la lista de ejercicios
+      await _loadExercises();
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ejercicio creado exitosamente'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al crear ejercicio: ${response.statusCode}'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ejercicio creado exitosamente'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
-      print("[EXERCISES_SCREEN] Error creating exercise: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error de conexión: $e'),
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -187,59 +117,95 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     required String videoUrl,
   }) async {
     try {
-      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
-      final fullUrl = '$baseUrl/exercises/$id';
-
-      print("[EXERCISES_SCREEN] Actualizando ejercicio en: $fullUrl");
-
-      final body = {
-        'name': name,
-        'description': description,
-        'equipment_type': equipmentType.value,
-        'video_url': videoUrl,
-      };
-
-      print("[EXERCISES_SCREEN] Body del PUT: $body");
-
-      final response = await NetworkService.put(fullUrl, body: body);
-
-      print(
-        "[EXERCISES_SCREEN] Update Response status: ${response.statusCode}",
+      await ExerciseService.updateExercise(
+        id: id,
+        name: name,
+        description: description,
+        equipmentType: equipmentType,
+        videoUrl: videoUrl,
       );
-      print("[EXERCISES_SCREEN] Update Response body: ${response.body}");
 
-      if (response.statusCode == 200) {
-        // Recargar la lista de ejercicios
-        await _loadExercises();
+      // Recargar la lista de ejercicios
+      await _loadExercises();
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ejercicio actualizado exitosamente'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al actualizar ejercicio: ${response.statusCode}',
-              ),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ejercicio actualizado exitosamente'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } catch (e) {
-      print("[EXERCISES_SCREEN] Error updating exercise: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error de conexión: $e'),
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteExercise(int exerciseId, String exerciseName) async {
+    try {
+      await ExerciseService.deleteExercise(exerciseId);
+
+      // Recargar la lista de ejercicios
+      await _loadExercises();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$exerciseName eliminado exitosamente'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showExerciseById(int exerciseId) async {
+    try {
+      // Mostrar indicador de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+          ),
+        ),
+      );
+
+      final exercise = await ExerciseService.getExerciseById(exerciseId);
+
+      // Cerrar indicador de carga
+      if (mounted) {
+        Navigator.pop(context);
+        _showExerciseDetails(context, exercise);
+      }
+    } catch (e) {
+      // Cerrar indicador de carga si aún está abierto
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -405,7 +371,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               )
             : const Text(
                 'Ejercicios',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
         backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
@@ -498,64 +467,56 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _showEditExerciseDialog(context, exercise);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Editar',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  // Botón de Editar
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showEditExerciseDialog(context, exercise);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${exercise.name} agregado a tu rutina',
-                                ),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Agregar a rutina',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      child: const Text(
+                        'Editar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Botón de Eliminar
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showDeleteConfirmationDialog(context, exercise);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Eliminar',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -782,6 +743,76 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, Exercise exercise) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminación'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '¿Estás seguro de que quieres eliminar este ejercicio?',
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      exercise.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      exercise.equipmentType.displayName,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Esta acción no se puede deshacer.',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteExercise(exercise.id, exercise.name);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
         );
       },
     );
