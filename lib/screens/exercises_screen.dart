@@ -215,6 +215,60 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     }
   }
 
+  Future<void> _deleteExercise(int id) async {
+    try {
+      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+      final fullUrl = '$baseUrl/exercises/$id';
+
+      print("[EXERCISES_SCREEN] Eliminando ejercicio en: $fullUrl");
+
+      final response = await NetworkService.delete(fullUrl);
+
+      print(
+        "[EXERCISES_SCREEN] Delete Response status: ${response.statusCode}",
+      );
+      print("[EXERCISES_SCREEN] Delete Response body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Recargar la lista de ejercicios
+        await _loadExercises();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ejercicio eliminado exitosamente'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error al eliminar ejercicio: ${response.statusCode}',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("[EXERCISES_SCREEN] Error deleting exercise: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildExercisesContent() {
     if (isLoading) {
       return const Center(
@@ -449,18 +503,10 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${exercise.name} agregado a tu rutina',
-                                ),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            _showDeleteConfirmation(context, exercise);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
+                            backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -468,7 +514,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Agregar a rutina',
+                            'Eliminar',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -477,6 +523,39 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${exercise.name} agregado a tu rutina',
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Agregar a rutina',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -703,6 +782,37 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, Exercise exercise) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminación'),
+          content: Text(
+            '¿Estás seguro de que quieres eliminar el ejercicio "${exercise.name}"?\n\nEsta acción no se puede deshacer.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteExercise(exercise.id);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Eliminar'),
+            ),
+          ],
         );
       },
     );
