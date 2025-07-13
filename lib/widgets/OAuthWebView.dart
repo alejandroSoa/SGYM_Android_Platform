@@ -22,7 +22,7 @@ class _OAuthWebViewState extends State<OAuthWebView> {
   @override
   void initState() {
     super.initState();
-    
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
@@ -49,10 +49,16 @@ class _OAuthWebViewState extends State<OAuthWebView> {
   void _handleCallback(String url) {
     try {
       final uri = Uri.parse(url);
-      final token = uri.queryParameters['access_token'];
-      
-      if (token != null) {
-        Navigator.of(context).pop(token);
+      final accessToken = uri.queryParameters['access_token'];
+      final refreshToken = uri.queryParameters['refresh_token'];
+
+      if (accessToken != null) {
+        // Devolvemos ambos tokens en un Map
+        final tokens = {
+          'access_token': accessToken,
+          'refresh_token': refreshToken,
+        };
+        Navigator.of(context).pop(tokens);
       } else {
         Navigator.of(context).pop();
       }
@@ -75,10 +81,7 @@ class _OAuthWebViewState extends State<OAuthWebView> {
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),
-          if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            ),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );

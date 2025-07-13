@@ -3,6 +3,7 @@ import 'dart:convert';
 
 class SharedPreferencesService {
   static const String _tokenKey = 'oauth-token';
+  static const String _refreshTokenKey = 'oauth-refresh-token';
   static const String _userDataKey = 'user_data';
   static const String _firstInitKey = 'first-init-app';
 
@@ -19,6 +20,21 @@ class SharedPreferencesService {
   static Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+  }
+
+  static Future<void> setRefreshToken(String refreshToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_refreshTokenKey, refreshToken);
+  }
+
+  static Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_refreshTokenKey);
+  }
+
+  static Future<void> clearRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_refreshTokenKey);
   }
 
   static Future<void> setUser(Map<String, dynamic> user) async {
