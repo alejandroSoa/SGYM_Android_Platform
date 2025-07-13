@@ -80,6 +80,72 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     }
   }
 
+  Future<void> _createExercise({
+    required String name,
+    required String description,
+    required EquipmentType equipmentType,
+    required String videoUrl,
+  }) async {
+    try {
+      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+      final fullUrl = '$baseUrl/exercises';
+
+      print("[EXERCISES_SCREEN] Creando ejercicio en: $fullUrl");
+
+      final body = {
+        'name': name,
+        'description': description,
+        'equipmentType': equipmentType.value,
+        'videoUrl': videoUrl,
+      };
+
+      print("[EXERCISES_SCREEN] Body del POST: $body");
+
+      final response = await NetworkService.post(fullUrl, body: body);
+
+      print(
+        "[EXERCISES_SCREEN] Create Response status: ${response.statusCode}",
+      );
+      print("[EXERCISES_SCREEN] Create Response body: ${response.body}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Recargar la lista de ejercicios
+        await _loadExercises();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ejercicio creado exitosamente'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al crear ejercicio: ${response.statusCode}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("[EXERCISES_SCREEN] Error creating exercise: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error de conexión: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildExercisesContent() {
     if (isLoading) {
       return const Center(
@@ -326,20 +392,109 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   }
 
   void _showAddExerciseDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final videoUrlController = TextEditingController();
+    EquipmentType selectedEquipmentType = EquipmentType.other;
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Próximamente'),
-          content: const Text(
-            'La funcionalidad para agregar ejercicios personalizados estará disponible próximamente.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Entendido'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Agregar Ejercicio'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre del ejercicio',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Descripción',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<EquipmentType>(
+                      value: selectedEquipmentType,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de equipamiento',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: EquipmentType.values.map((type) {
+                        return DropdownMenuItem<EquipmentType>(
+                          value: type,
+                          child: Text(type.displayName),
+                        );
+                      }).toList(),
+                      onChanged: (EquipmentType? value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedEquipmentType = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: videoUrlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL del video (opcional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty ||
+                        descriptionController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Por favor completa los campos obligatorios',
+                          ),
+                          backgroundColor: Colors.orange,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(context);
+
+                    await _createExercise(
+                      name: nameController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      equipmentType: selectedEquipmentType,
+                      videoUrl: videoUrlController.text.trim(),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Crear'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
