@@ -94,10 +94,16 @@ class _MainLayoutState extends State<MainLayout> {
       print("[MAIN_LAYOUT] User role: $userRole");
 
       if (userRole != null) {
-        viewConfigs = RoleConfigService.getScreensForRole(userRole);
+        viewConfigs = RoleConfigService.getScreensForRole(
+          userRole,
+          onBack: () => setState(() => currentIndex = 0),
+        );
         navItems = RoleConfigService.getNavItemsForRole(userRole);
       } else {
-        viewConfigs = RoleConfigService.getScreensForRole(0);
+        viewConfigs = RoleConfigService.getScreensForRole(
+          0,
+          onBack: () => setState(() => currentIndex = 0),
+        );
         navItems = RoleConfigService.getNavItemsForRole(0);
       }
 
@@ -106,7 +112,10 @@ class _MainLayoutState extends State<MainLayout> {
     } catch (e) {
       print("[MAIN_LAYOUT] Error loading role config: $e");
       // Configuración por defecto en caso de error
-      viewConfigs = RoleConfigService.getScreensForRole(0);
+      viewConfigs = RoleConfigService.getScreensForRole(
+        0,
+        onBack: () => setState(() => currentIndex = 0),
+      );
       navItems = RoleConfigService.getNavItemsForRole(0);
     }
   }
@@ -151,20 +160,22 @@ class _MainLayoutState extends State<MainLayout> {
       body: SafeArea(
         child: Column(
           children: [
-            // TopBar sin SizedBox wrapper
-            CustomTopBar(
-              username: username,
-              profileImage: userProfileImage,
-              currentViewTitle: config.title,
-              showBackButton: config.showBackButton,
-              showProfileIcon: config.showProfileIcon,
-              showNotificationIcon: config.showNotificationIcon,
-              onBack: () => setState(() => currentIndex = 0),
-              onProfileTap: () =>
-                  setState(() => currentIndex = viewConfigs.length - 2),
-              onNotificationsTap: () =>
-                  setState(() => currentIndex = viewConfigs.length - 1),
-            ),
+            // TopBar condicional
+            if (config.showTopBar) ...[
+              CustomTopBar(
+                username: username,
+                profileImage: userProfileImage,
+                currentViewTitle: config.title,
+                showBackButton: config.showBackButton,
+                showProfileIcon: config.showProfileIcon,
+                showNotificationIcon: config.showNotificationIcon,
+                onBack: () => setState(() => currentIndex = 0),
+                onProfileTap: () =>
+                    setState(() => currentIndex = viewConfigs.length - 2),
+                onNotificationsTap: () =>
+                    setState(() => currentIndex = viewConfigs.length - 1),
+              ),
+            ],
             // Contenido principal
             Expanded(child: config.view),
           ],

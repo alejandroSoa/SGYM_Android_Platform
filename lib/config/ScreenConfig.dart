@@ -7,6 +7,7 @@ class Screenconfig {
   final bool showNotificationIcon;
   final bool showBackButton;
   final bool showBottomNav;
+  final bool showTopBar;
 
   Screenconfig({
     required this.view,
@@ -15,5 +16,6 @@ class Screenconfig {
     this.showNotificationIcon = true,
     this.showBackButton = false,
     this.showBottomNav = true,
+    this.showTopBar = true,
   });
 }

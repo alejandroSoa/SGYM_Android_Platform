@@ -8,13 +8,19 @@ import '../screens/profile_screen.dart';
 import '../screens/notifications_screen.dart';
 
 class RoleConfigService {
-  static List<Screenconfig> getScreensForRole(int roleId) {
+  static List<Screenconfig> getScreensForRole(int roleId, {VoidCallback? onBack}) {
     switch (roleId) {
       case 3: // Trainer - SIN DIETAS
         return [
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
-          Screenconfig(view: const RoutinesScreen(showExerciseButton: true)),
+          Screenconfig(
+            view: RoutinesScreen(
+              showExerciseButton: true,
+              onBack: onBack,
+            ),
+            showTopBar: false,
+          ),
           Screenconfig(
             view: const ProfileScreen(),
             showBackButton: true,
@@ -36,7 +42,10 @@ class RoleConfigService {
           Screenconfig(view: const HomeScreen()),
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
-          Screenconfig(view: const RoutinesScreen()),
+          Screenconfig(
+            view: RoutinesScreen(onBack: onBack),
+            showTopBar: false,
+          ),
           Screenconfig(
             view: const ProfileScreen(),
             showBackButton: true,
