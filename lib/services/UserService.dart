@@ -93,4 +93,51 @@ class UserService {
       return null;
     }
   }
+
+  // Obtener todos los usuarios
+  static Future<List<Map<String, dynamic>>?> getUsersByRole(int roleId) async {
+    try {
+      final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+      final fullUrl = '$baseUrl/users';
+
+      final response = await NetworkService.get(fullUrl);
+      print('All users response status: ${response.statusCode}');
+      print('All users response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Decoded response data: $responseData');
+
+        // Verificar si la data es una lista o un objeto
+        dynamic data = responseData['data'];
+        List<Map<String, dynamic>> allUsers = [];
+
+        if (data is List) {
+          // Si es una lista, convertir cada elemento
+          allUsers = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        } else if (data is Map<String, dynamic>) {
+          // Si es un mapa, crear una lista con un solo elemento
+          allUsers = [data];
+        } else {
+          print('Unexpected data format: ${data.runtimeType}');
+          return null;
+        }
+
+        print('Total users found: ${allUsers.length}');
+
+        // Mostrar información de todos los usuarios
+        for (var user in allUsers) {
+          print(
+            'User: ${user['email']} - Role ID: ${user['role_id']} - ID: ${user['id']}',
+          );
+        }
+
+        return allUsers;
+      }
+      return null;
+    } catch (e) {
+      print('Error in getUsersByRole: $e');
+      rethrow;
+    }
+  }
 }

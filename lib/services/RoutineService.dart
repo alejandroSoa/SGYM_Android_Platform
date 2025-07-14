@@ -12,21 +12,11 @@ class RoutineService {
     try {
       final url = '$_baseUrl/routines';
       final response = await NetworkService.get(url);
-      
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        print('Decoded response: $responseData');
-        
         final data = responseData['data'] as List;
-        print('Data list: $data');
-        
-        return data.map((e) {
-          print('Processing routine item: $e');
-          return Routine.fromJson(e);
-        }).toList();
+        return data.map((e) => Routine.fromJson(e)).toList();
       }
       return null;
     } catch (e) {
@@ -42,20 +32,33 @@ class RoutineService {
     String? description,
     required int userId,
   }) async {
-    final url = '$_baseUrl/routines';
-    final body = {
-      'day': day,
-      'name': name,
-      'description': description,
-      'user_id': userId,
-    };
-    final response = await NetworkService.post(url, body: body);
-    
-    if (response.statusCode == 201) {
-      final data = json.decode(response.body)['data'];
-      return Routine.fromJson(data);
+    try {
+      final url = '$_baseUrl/routines';
+      final body = {
+        'day': day,
+        'name': name,
+        'description': description,
+        'user_id': userId,
+      };
+
+      print('Creating routine with URL: $url');
+      print('Body: $body');
+
+      final response = await NetworkService.post(url, body: body);
+
+      print('Create routine response status: ${response.statusCode}');
+      print('Create routine response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body)['data'];
+        print('Created routine data: $data');
+        return Routine.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print('Error in createRoutine: $e');
+      rethrow;
     }
-    return null;
   }
 
   // Actualizar rutina
@@ -66,13 +69,9 @@ class RoutineService {
     String? description,
   }) async {
     final url = '$_baseUrl/routines/$id';
-    final body = {
-      'day': day,
-      'name': name,
-      'description': description,
-    };
+    final body = {'day': day, 'name': name, 'description': description};
     final response = await NetworkService.put(url, body: body);
-    
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'];
       return Routine.fromJson(data);
@@ -84,7 +83,7 @@ class RoutineService {
   static Future<bool> deleteRoutine(int id) async {
     final url = '$_baseUrl/routines/$id';
     final response = await NetworkService.delete(url);
-    
+
     return response.statusCode == 200;
   }
 
@@ -92,7 +91,7 @@ class RoutineService {
   static Future<Routine?> fetchRoutineById(int id) async {
     final url = '$_baseUrl/routines/$id';
     final response = await NetworkService.get(url);
-    
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'];
       return Routine.fromJson(data);
@@ -106,12 +105,9 @@ class RoutineService {
     required int exerciseId,
   }) async {
     final url = '$_baseUrl/routine-exercises';
-    final body = {
-      'routine_id': routineId,
-      'exercise_id': exerciseId,
-    };
+    final body = {'routine_id': routineId, 'exercise_id': exerciseId};
     final response = await NetworkService.post(url, body: body);
-    
+
     if (response.statusCode == 201) {
       final data = json.decode(response.body)['data'];
       return RoutineExercise.fromJson(data);
@@ -120,10 +116,12 @@ class RoutineService {
   }
 
   // Listar ejercicios de una rutina
-  static Future<List<Map<String, dynamic>>?> fetchExercisesOfRoutine(int routineId) async {
+  static Future<List<Map<String, dynamic>>?> fetchExercisesOfRoutine(
+    int routineId,
+  ) async {
     final url = '$_baseUrl/routines/$routineId/exercises';
     final response = await NetworkService.get(url);
-    
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'] as List;
       return data.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -135,7 +133,7 @@ class RoutineService {
   static Future<bool> removeExerciseFromRoutine(int routineExerciseId) async {
     final url = '$_baseUrl/routine-exercises/$routineExerciseId';
     final response = await NetworkService.delete(url);
-    
+
     return response.statusCode == 200;
   }
 }

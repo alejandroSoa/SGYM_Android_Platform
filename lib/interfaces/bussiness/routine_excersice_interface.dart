@@ -18,11 +18,7 @@ class RoutineExercise {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'exercise_id': exerciseId,
-      'routine_id': routineId,
-    };
+    return {'id': id, 'exercise_id': exerciseId, 'routine_id': routineId};
   }
 }
 
