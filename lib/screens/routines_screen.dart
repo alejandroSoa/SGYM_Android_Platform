@@ -202,7 +202,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -224,7 +227,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         const SizedBox(height: 4),
                         Text(
                           routine.description!,
-                          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                          ),
                         ),
                       ],
                     ],
@@ -1177,6 +1183,32 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                   const SizedBox(height: 24),
+                  // Botón de Gestionar Ejercicios
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showManageExercisesDialog(routine);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Gestionar Ejercicios',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   // Botón de Editar
                   SizedBox(
                     width: double.infinity,
@@ -1239,7 +1271,9 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
 
   void _showEditRoutineDialog(Routine routine) {
     final nameController = TextEditingController(text: routine.name);
-    final descriptionController = TextEditingController(text: routine.description);
+    final descriptionController = TextEditingController(
+      text: routine.description,
+    );
     String selectedDay = _convertDayToSpanish(routine.day);
 
     final List<String> days = [
@@ -1393,9 +1427,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '¿Estás seguro de que quieres eliminar esta rutina?',
-              ),
+              const Text('¿Estás seguro de que quieres eliminar esta rutina?'),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -1478,6 +1510,52 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
         );
       }
     }
+  }
+
+  void _showManageExercisesDialog(Routine routine) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Ejercicios de ${routine.name}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6366F1),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(child: _RoutineExercisesManager(routine: routine)),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showAddRoutineDialog() {
@@ -1749,6 +1827,421 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _RoutineExercisesManager extends StatefulWidget {
+  final Routine routine;
+
+  const _RoutineExercisesManager({Key? key, required this.routine})
+    : super(key: key);
+
+  @override
+  _RoutineExercisesManagerState createState() =>
+      _RoutineExercisesManagerState();
+}
+
+class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
+  List<Map<String, dynamic>> routineExercises = [];
+  List<Exercise> allExercises = [];
+  bool isLoadingRoutineExercises = true;
+  bool isLoadingAllExercises = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllExercises().then((_) {
+      _loadRoutineExercises();
+    });
+  }
+
+  // Método para enriquecer los datos de rutina con información completa del ejercicio
+  Future<void> _loadRoutineExercises() async {
+    try {
+      setState(() {
+        isLoadingRoutineExercises = true;
+        errorMessage = null;
+      });
+
+      print('🔍 Cargando ejercicios para rutina ID: ${widget.routine.id}');
+      final exercises = await RoutineService.fetchExercisesOfRoutine(
+        widget.routine.id,
+      );
+
+      print('📦 Respuesta de fetchExercisesOfRoutine:');
+      print('   - Número de ejercicios: ${exercises?.length ?? 0}');
+      print('   - Datos completos: $exercises');
+
+      if (exercises != null) {
+        for (int i = 0; i < exercises.length; i++) {
+          final exercise = exercises[i];
+          print('   📝 Ejercicio $i:');
+          print('      - ID: ${exercise['id']}');
+          print('      - Nombre: ${exercise['name'] ?? 'N/A'}');
+          print('      - Descripción: ${exercise['description'] ?? 'N/A'}');
+          print(
+            '      - Equipment Type: ${exercise['equipment_type'] ?? 'N/A'}',
+          );
+          print('      - Exercise ID: ${exercise['exercise_id'] ?? 'N/A'}');
+          print('      - Routine ID: ${exercise['routine_id'] ?? 'N/A'}');
+          print('      - Datos completos del ejercicio: $exercise');
+        }
+      }
+
+      setState(() {
+        routineExercises = exercises ?? [];
+        isLoadingRoutineExercises = false;
+      });
+    } catch (e) {
+      print('❌ Error en _loadRoutineExercises: $e');
+      setState(() {
+        errorMessage = 'Error al cargar ejercicios de la rutina: $e';
+        isLoadingRoutineExercises = false;
+      });
+    }
+  }
+
+  Future<void> _loadAllExercises() async {
+    try {
+      setState(() {
+        isLoadingAllExercises = true;
+      });
+
+      final exercises = await ExerciseService.getExercises();
+      setState(() {
+        allExercises = exercises;
+        isLoadingAllExercises = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingAllExercises = false;
+      });
+    }
+  }
+
+  Future<void> _assignExerciseToRoutine(Exercise exercise) async {
+    try {
+      final routineExercise = await RoutineService.assignExerciseToRoutine(
+        routineId: widget.routine.id,
+        exerciseId: exercise.id,
+      );
+
+      if (routineExercise != null) {
+        await _loadRoutineExercises();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Ejercicio "${exercise.name}" agregado a la rutina',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al agregar el ejercicio'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeExerciseFromRoutine(
+    Map<String, dynamic> routineExercise,
+  ) async {
+    try {
+      final success = await RoutineService.removeExerciseFromRoutine(
+        routineExercise['id'] as int,
+      );
+
+      if (success) {
+        await _loadRoutineExercises();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Ejercicio "${routineExercise['exercise']?['name'] ?? 'Ejercicio'}" eliminado de la rutina',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error al eliminar el ejercicio'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAddExerciseDialog() {
+    if (allExercises.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay ejercicios disponibles'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Filtrar ejercicios que ya están en la rutina
+    final assignedExerciseIds = routineExercises
+        .map((re) => re['exercise_id'] as int?)
+        .where((id) => id != null)
+        .cast<int>()
+        .toList();
+
+    print('🔍 IDs de ejercicios ya asignados: $assignedExerciseIds');
+
+    final availableExercises = allExercises
+        .where((exercise) => !assignedExerciseIds.contains(exercise.id))
+        .toList();
+
+    if (availableExercises.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Todos los ejercicios ya están asignados a esta rutina',
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Agregar Ejercicio'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              itemCount: availableExercises.length,
+              itemBuilder: (context, index) {
+                final exercise = availableExercises[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(exercise.name),
+                    subtitle: Text(exercise.equipmentType.displayName),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _assignExerciseToRoutine(exercise);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Agregar'),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Ejercicios asignados',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            ElevatedButton.icon(
+              onPressed: isLoadingAllExercises ? null : _showAddExerciseDialog,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Agregar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (errorMessage != null) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red[200]!),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red[700]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    errorMessage!,
+                    style: TextStyle(color: Colors.red[700]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        Expanded(
+          child: isLoadingRoutineExercises
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF6366F1),
+                    ),
+                  ),
+                )
+              : routineExercises.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.fitness_center, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'No hay ejercicios asignados',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Presiona "Agregar" para asignar ejercicios',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: routineExercises.length,
+                  itemBuilder: (context, index) {
+                    final routineExercise = routineExercises[index];
+
+                    // Mostrar datos directos del API
+                    print('🎯 Mostrando ejercicio $index: $routineExercise');
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.fitness_center,
+                          color: Color(0xFF6366F1),
+                        ),
+                        title: Text(
+                          routineExercise['name'] ?? 'Sin nombre',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          routineExercise['description'] ?? 'Sin descripción',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: IconButton(
+                          onPressed: () {
+                            _showRemoveExerciseConfirmation(routineExercise);
+                          },
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _showRemoveExerciseConfirmation(Map<String, dynamic> routineExercise) {
+    final exerciseName = routineExercise['name'] ?? 'Ejercicio';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminación'),
+          content: Text(
+            '¿Estás seguro de que quieres quitar "$exerciseName" de esta rutina?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _removeExerciseFromRoutine(routineExercise);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Quitar'),
+            ),
+          ],
         );
       },
     );
