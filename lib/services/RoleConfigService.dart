@@ -4,6 +4,7 @@ import '../screens/home_screen.dart';
 import '../screens/appointments_screen.dart';
 import '../screens/diets_screen.dart';
 import '../screens/routines_screen.dart';
+import '../screens/user_routines_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/notifications_screen.dart';
 
@@ -43,7 +44,7 @@ class RoleConfigService {
           Screenconfig(view: const AppointmentsScreen()),
           Screenconfig(view: const DietsScreen()),
           Screenconfig(
-            view: RoutinesScreen(onBack: onBack),
+            view: UserRoutinesScreen(onBack: onBack),
             showTopBar: false,
           ),
           Screenconfig(
