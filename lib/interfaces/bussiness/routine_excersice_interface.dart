@@ -11,9 +11,9 @@ class RoutineExercise {
 
   factory RoutineExercise.fromJson(Map<String, dynamic> json) {
     return RoutineExercise(
-      id: json['id'],
-      exerciseId: json['exercise_id'],
-      routineId: json['routine_id'],
+      id: json['id'] as int? ?? 0,
+      exerciseId: json['exercise_id'] as int? ?? 0,
+      routineId: json['routine_id'] as int? ?? 0,
     );
   }
 

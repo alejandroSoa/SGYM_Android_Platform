@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import '../interfaces/exercises/exercise_interface.dart';
+import '../interfaces/bussiness/routine_interface.dart';
 import '../services/ExerciseService.dart';
+import '../services/RoutineService.dart';
 
 class RoutinesScreen extends StatefulWidget {
   final bool showExerciseButton;
   final VoidCallback? onBack;
 
   const RoutinesScreen({
-    super.key, 
+    super.key,
     this.showExerciseButton = false,
     this.onBack,
   });
@@ -22,7 +24,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
   bool isLoadingExercises = false;
   String? exercisesError;
 
-  // Lista de rutinas de ejemplo
+  // Lista de rutinas reales desde la API
+  List<Routine> realRoutines = [];
+  bool isLoadingRoutines = false;
+  String? routinesError;
+
+  // Lista de rutinas de ejemplo (para trainers que aún no usan API)
   List<String> routines = ['Rutina nombre', 'Rutina nombre', 'Rutina nombre'];
 
   @override
@@ -31,6 +38,8 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     if (widget.showExerciseButton) {
       _loadExercises();
     }
+    // Cargar rutinas para todos los usuarios
+    _loadRoutines();
   }
 
   Future<void> _loadExercises() async {
@@ -50,6 +59,258 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
         exercisesError = e.toString();
         isLoadingExercises = false;
       });
+    }
+  }
+
+  Future<void> _loadRoutines() async {
+    setState(() {
+      isLoadingRoutines = true;
+      routinesError = null;
+    });
+
+    try {
+      final routinesList = await RoutineService.fetchRoutines();
+      setState(() {
+        realRoutines = routinesList ?? [];
+        isLoadingRoutines = false;
+      });
+      print("Rutinas cargadas: ${realRoutines.length}");
+      for (var routine in realRoutines) {
+        print("Rutina: ${routine.name} - Día: ${routine.day}");
+      }
+    } catch (e) {
+      setState(() {
+        routinesError = e.toString();
+        isLoadingRoutines = false;
+      });
+      print("Error al cargar rutinas: $e");
+    }
+  }
+
+  Map<String, List<Routine>> _organizeRoutinesByDay() {
+    Map<String, List<Routine>> organizedRoutines = {
+      'Lunes': [],
+      'Martes': [],
+      'Miércoles': [],
+      'Jueves': [],
+      'Viernes': [],
+      'Sábado': [],
+      'Domingo': [],
+    };
+
+    for (final routine in realRoutines) {
+      final day = routine.day;
+      if (organizedRoutines.containsKey(day)) {
+        organizedRoutines[day]!.add(routine);
+      }
+    }
+
+    return organizedRoutines;
+  }
+
+  Widget _buildRoutinesSection() {
+    if (isLoadingRoutines) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+        ),
+      );
+    }
+
+    if (routinesError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Error al cargar rutinas',
+              style: TextStyle(
+                color: Colors.red[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _loadRoutines,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Si es trainer, mostrar vista simple
+    if (widget.showExerciseButton) {
+      return Column(
+        children: [
+          // Sección "Agregar nueva rutina"
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Agregar nueva rutina',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white, size: 20),
+                    onPressed: () {
+                      _showAddRoutineDialog();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Lista de rutinas reales
+          ...realRoutines.map(
+            (routine) => Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    routine.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Día: ${routine.day}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                  if (routine.description != null &&
+                      routine.description!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      routine.description!,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Vista para usuarios organizadas por día
+      final routinesByDay = _organizeRoutinesByDay();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: routinesByDay.entries.map((dayEntry) {
+          final day = dayEntry.key;
+          final dayRoutines = dayEntry.value;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Encabezado del día
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: dayRoutines.isEmpty ? Colors.grey[200] : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: dayRoutines.isEmpty
+                      ? null
+                      : Border.all(color: Colors.grey[300]!),
+                ),
+                child: Text(
+                  day,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: dayRoutines.isEmpty
+                        ? Colors.grey[500]
+                        : Colors.black87,
+                  ),
+                ),
+              ),
+
+              // Rutinas del día
+              if (dayRoutines.isNotEmpty) ...[
+                ...dayRoutines.map((routine) {
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8E5FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            routine.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (routine.description != null &&
+                              routine.description!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              routine.description!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black87,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+
+              const SizedBox(height: 16),
+            ],
+          );
+        }).toList(),
+      );
     }
   }
 
@@ -692,11 +953,13 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Para balancear el espacio del IconButton
+                  const SizedBox(
+                    width: 48,
+                  ), // Para balancear el espacio del IconButton
                 ],
               ),
               const SizedBox(height: 20),
-              
+
               // Sección de Ejercicios (Solo para trainers - role_id = 3)
               if (widget.showExerciseButton) ...[
                 Container(
@@ -742,72 +1005,8 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                 const SizedBox(height: 24),
               ],
 
-              // Sección "Agregar nueva rutina"
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 20,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Agregar nueva rutina',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          _showAddRoutineDialog();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Lista de rutinas existentes
-              ...routines.map(
-                (routine) => Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    routine,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+              // Sección de rutinas
+              _buildRoutinesSection(),
             ],
           ),
         ),

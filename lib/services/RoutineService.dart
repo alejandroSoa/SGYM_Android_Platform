@@ -1,28 +1,38 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../interfaces/bussiness/routine_excersice_interface.dart';
-import 'UserService.dart';
+import '../network/NetworkService.dart';
 
 class RoutineService {
   static String get _baseUrl => dotenv.env['BUSINESS_BASE_URL'] ?? '';
 
-  static Future<String?> _getToken() async => await UserService.getToken();
-
   // Listar rutinas
   static Future<RoutineList?> fetchRoutines() async {
-    final token = await _getToken();
-    final url = '$_baseUrl/routines';
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body)['data'] as List;
-      return data.map((e) => Routine.fromJson(e)).toList();
+    try {
+      final url = '$_baseUrl/routines';
+      final response = await NetworkService.get(url);
+      
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Decoded response: $responseData');
+        
+        final data = responseData['data'] as List;
+        print('Data list: $data');
+        
+        return data.map((e) {
+          print('Processing routine item: $e');
+          return Routine.fromJson(e);
+        }).toList();
+      }
+      return null;
+    } catch (e) {
+      print('Error in fetchRoutines: $e');
+      rethrow;
     }
-    return null;
   }
 
   // Crear rutina
@@ -32,7 +42,6 @@ class RoutineService {
     String? description,
     required int userId,
   }) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routines';
     final body = {
       'day': day,
@@ -40,11 +49,8 @@ class RoutineService {
       'description': description,
       'user_id': userId,
     };
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
+    final response = await NetworkService.post(url, body: body);
+    
     if (response.statusCode == 201) {
       final data = json.decode(response.body)['data'];
       return Routine.fromJson(data);
@@ -59,18 +65,14 @@ class RoutineService {
     required String name,
     String? description,
   }) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routines/$id';
     final body = {
       'day': day,
       'name': name,
       'description': description,
     };
-    final response = await http.put(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
+    final response = await NetworkService.put(url, body: body);
+    
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'];
       return Routine.fromJson(data);
@@ -80,23 +82,17 @@ class RoutineService {
 
   // Eliminar rutina
   static Future<bool> deleteRoutine(int id) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routines/$id';
-    final response = await http.delete(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-    );
+    final response = await NetworkService.delete(url);
+    
     return response.statusCode == 200;
   }
 
   // Obtener rutina por ID
   static Future<Routine?> fetchRoutineById(int id) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routines/$id';
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-    );
+    final response = await NetworkService.get(url);
+    
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'];
       return Routine.fromJson(data);
@@ -109,17 +105,13 @@ class RoutineService {
     required int routineId,
     required int exerciseId,
   }) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routine-exercises';
     final body = {
       'routine_id': routineId,
       'exercise_id': exerciseId,
     };
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
+    final response = await NetworkService.post(url, body: body);
+    
     if (response.statusCode == 201) {
       final data = json.decode(response.body)['data'];
       return RoutineExercise.fromJson(data);
@@ -129,12 +121,9 @@ class RoutineService {
 
   // Listar ejercicios de una rutina
   static Future<List<Map<String, dynamic>>?> fetchExercisesOfRoutine(int routineId) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routines/$routineId/exercises';
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-    );
+    final response = await NetworkService.get(url);
+    
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'] as List;
       return data.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -144,12 +133,9 @@ class RoutineService {
 
   // Quitar ejercicio de una rutina
   static Future<bool> removeExerciseFromRoutine(int routineExerciseId) async {
-    final token = await _getToken();
     final url = '$_baseUrl/routine-exercises/$routineExerciseId';
-    final response = await http.delete(
-      Uri.parse(url),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-    );
+    final response = await NetworkService.delete(url);
+    
     return response.statusCode == 200;
   }
 }
