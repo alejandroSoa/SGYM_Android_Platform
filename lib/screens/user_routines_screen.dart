@@ -5,10 +5,7 @@ import '../services/RoutineService.dart';
 class UserRoutinesScreen extends StatefulWidget {
   final VoidCallback? onBack;
 
-  const UserRoutinesScreen({
-    super.key,
-    this.onBack,
-  });
+  const UserRoutinesScreen({super.key, this.onBack});
 
   @override
   State<UserRoutinesScreen> createState() => _UserRoutinesScreenState();
@@ -109,11 +106,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'Error al cargar rutinas',
@@ -126,10 +119,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
             const SizedBox(height: 8),
             Text(
               routinesError!,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -151,11 +141,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.fitness_center,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.fitness_center, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No tienes rutinas asignadas',
@@ -168,10 +154,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
             const SizedBox(height: 8),
             Text(
               'Tu entrenador te asignará rutinas pronto',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -194,13 +177,12 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
             // Encabezado del día
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 16,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: dayRoutines.isEmpty ? Colors.grey[200] : const Color(0xFF6366F1),
+                color: dayRoutines.isEmpty
+                    ? Colors.grey[200]
+                    : const Color(0xFF6366F1),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: dayRoutines.isNotEmpty
                     ? [
@@ -255,7 +237,9 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                                  color: const Color(
+                                    0xFF6366F1,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
@@ -477,9 +461,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Expanded(
-                  child: _UserRoutineExercisesViewer(routine: routine),
-                ),
+                Expanded(child: _UserRoutineExercisesViewer(routine: routine)),
               ],
             ),
           ),
@@ -529,7 +511,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
                 ],
               ),
             ),
-            
+
             // Content
             Expanded(
               child: SingleChildScrollView(
@@ -549,7 +531,7 @@ class _UserRoutineExercisesViewer extends StatefulWidget {
   final Routine routine;
 
   const _UserRoutineExercisesViewer({Key? key, required this.routine})
-      : super(key: key);
+    : super(key: key);
 
   @override
   _UserRoutineExercisesViewerState createState() =>
@@ -606,11 +588,7 @@ class _UserRoutineExercisesViewerState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               errorMessage!,
@@ -632,11 +610,7 @@ class _UserRoutineExercisesViewerState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.fitness_center,
-              size: 64,
-              color: Colors.grey,
-            ),
+            Icon(Icons.fitness_center, size: 64, color: Colors.grey),
             SizedBox(height: 16),
             Text(
               'No hay ejercicios en esta rutina',
@@ -655,7 +629,7 @@ class _UserRoutineExercisesViewerState
       itemCount: routineExercises.length,
       itemBuilder: (context, index) {
         final exercise = routineExercises[index];
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 2,
@@ -670,17 +644,11 @@ class _UserRoutineExercisesViewerState
                 color: const Color(0xFF6366F1).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: Color(0xFF6366F1),
-              ),
+              child: const Icon(Icons.fitness_center, color: Color(0xFF6366F1)),
             ),
             title: Text(
               exercise['name'] ?? 'Sin nombre',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -688,10 +656,7 @@ class _UserRoutineExercisesViewerState
                 const SizedBox(height: 4),
                 Text(
                   exercise['description'] ?? 'Sin descripción',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
