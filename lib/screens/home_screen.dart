@@ -280,17 +280,53 @@ class _HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 24),
             child: ElevatedButton(
               onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('first-init-app');
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Datos del usuario borrados (Logout simulado)',
-                    ),
-                    backgroundColor: Colors.green,
-                  ),
+                // Mostrar diálogo de confirmación
+                bool? shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Cerrar Sesión'),
+                      content: const Text(
+                        '¿Estás seguro de que deseas cerrar sesión?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Cerrar Sesión'),
+                        ),
+                      ],
+                    );
+                  },
                 );
+
+                if (shouldLogout == true) {
+                  // Borrar datos del usuario
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('first-init-app');
+
+                  // Mostrar mensaje de éxito
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sesión cerrada exitosamente'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+
+                    // Esperar un momento y reiniciar la aplicación
+                    await Future.delayed(const Duration(seconds: 1));
+
+                    if (context.mounted) {
+                      // Reiniciar la aplicación navegando al FirstTimeScreen
+                      runApp(const MyApp(isFirstTime: true));
+                    }
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
