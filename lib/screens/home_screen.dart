@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../widgets/day_advice.dart';
 import '../widgets/daily_activity.dart';
 import '../services/RoutineService.dart';
+import '../services/DietService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
+import '../interfaces/bussiness/diet_interface.dart';
 import '../main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,11 +18,15 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Routine> userRoutines = [];
   bool isLoadingRoutines = false;
+  List<Map<String, dynamic>> userDiets = [];
+  bool isLoadingDiets = false;
+  String todayDietName = 'Sin dieta para hoy';
 
   @override
   void initState() {
     super.initState();
     _loadUserRoutines();
+    _loadUserDiets();
   }
 
   Future<void> _loadUserRoutines() async {
@@ -40,6 +46,89 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoadingRoutines = false;
       });
     }
+  }
+
+  Future<void> _loadUserDiets() async {
+    setState(() {
+      isLoadingDiets = true;
+    });
+
+    try {
+      print('=== DEBUG DIETAS: Iniciando carga de dietas ===');
+      final diets = await DietService.fetchDiets();
+      print('=== DEBUG DIETAS: Respuesta recibida ===');
+      print('Dietas recibidas: $diets');
+      print('Tipo de respuesta: ${diets.runtimeType}');
+      print('Cantidad de dietas: ${diets?.length ?? 0}');
+
+      setState(() {
+        userDiets = diets ?? [];
+        isLoadingDiets = false;
+        _updateTodayDiet();
+      });
+    } catch (e) {
+      print('=== DEBUG DIETAS: Error al cargar dietas ===');
+      print('Error completo: $e');
+      print('Tipo de error: ${e.runtimeType}');
+      setState(() {
+        isLoadingDiets = false;
+        todayDietName = 'Error al cargar dieta';
+      });
+    }
+  }
+
+  String _getCurrentDayInEnglish() {
+    final now = DateTime.now();
+    final weekdays = [
+      'monday', // 1
+      'tuesday', // 2
+      'wednesday', // 3
+      'thursday', // 4
+      'friday', // 5
+      'saturday', // 6
+      'sunday', // 7
+    ];
+    return weekdays[now.weekday - 1];
+  }
+
+  void _updateTodayDiet() {
+    print('=== DEBUG DIETAS: Actualizando dieta del día ===');
+
+    if (isLoadingDiets) {
+      print('Aún cargando dietas...');
+      setState(() {
+        todayDietName = 'Cargando dieta...';
+      });
+      return;
+    }
+
+    final today = _getCurrentDayInEnglish();
+    print('Día actual en inglés: $today');
+    print('Total de dietas disponibles: ${userDiets.length}');
+
+    // Mostrar todas las dietas disponibles
+    for (int i = 0; i < userDiets.length; i++) {
+      final diet = userDiets[i];
+      print('Dieta $i: ${diet['name']} - Día: ${diet['day']}');
+    }
+
+    final todayDiet = userDiets.where((diet) {
+      final dietDay = diet['day']?.toString().toLowerCase();
+      print('Comparando: "$dietDay" == "$today"');
+      return dietDay == today.toLowerCase();
+    }).toList();
+
+    print('Dietas encontradas para hoy: ${todayDiet.length}');
+
+    setState(() {
+      if (todayDiet.isNotEmpty) {
+        todayDietName = todayDiet.first['name'] ?? 'Dieta sin nombre';
+        print('Dieta seleccionada: $todayDietName');
+      } else {
+        todayDietName = 'Sin dieta para hoy';
+        print('No se encontró dieta para el día: $today');
+      }
+    });
   }
 
   List<String> _getRoutineNames() {
@@ -151,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
           DailyActivity(
             ejercicios: _getRoutineNames(),
             totalEjercicios: userRoutines.length,
-            dietaPrincipal: 'Ensalada con proteína',
+            dietaPrincipal: todayDietName,
             citaPrincipal: 'Consulta coach a las 4:00 PM',
             onRutinaTap: () {
               final mainLayoutState = context
