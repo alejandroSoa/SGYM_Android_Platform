@@ -19,7 +19,7 @@ class Routine {
       day: json['day'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      userId: json['user_id'] as int? ?? 0,
+      userId: json['userId'] as int? ?? 0,
     );
   }
 
@@ -29,7 +29,7 @@ class Routine {
       'day': day,
       'name': name,
       'description': description,
-      'user_id': userId,
+      'userId': userId,
     };
   }
 }

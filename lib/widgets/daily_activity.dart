@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DailyActivity extends StatelessWidget {
-  final List<String> ejercicios;
-  final int totalEjercicios;
+  final List<String> ejercicios; // Ahora representa nombres de rutinas
+  final int totalEjercicios; // Ahora representa total de rutinas
   final String dietaPrincipal;
   final String citaPrincipal;
 
@@ -12,7 +12,10 @@ class DailyActivity extends StatelessWidget {
     required this.totalEjercicios,
     required this.dietaPrincipal,
     required this.citaPrincipal,
-  }) : assert(ejercicios.length == 5, 'Debe haber exactamente 5 ejercicios');
+  }) : assert(
+         ejercicios.length == 5,
+         'Debe haber exactamente 5 elementos en la lista',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +30,7 @@ class DailyActivity extends StatelessWidget {
         children: [
           const Text(
             'Actividad diaria',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 10),
           Row(
@@ -47,7 +47,8 @@ class DailyActivity extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: [                          Container(
+                        children: [
+                          Container(
                             width: 30,
                             height: 30,
                             decoration: BoxDecoration(
@@ -71,13 +72,22 @@ class DailyActivity extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      ...ejercicios.map((e) => Text(e, style: const TextStyle(color: Colors.grey))),
+                      ...ejercicios.map(
+                        (e) =>
+                            Text(e, style: const TextStyle(color: Colors.grey)),
+                      ),
                       const SizedBox(height: 19),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Ejercicios', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text('$totalEjercicios', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          const Text(
+                            'Rutinas',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          Text(
+                            '$totalEjercicios',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ],
                       ),
                     ],
@@ -108,11 +118,11 @@ class DailyActivity extends StatelessWidget {
                                   color: const Color(0xFFE4F431),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                              child: const Icon(
-                              Icons.restaurant,
-                              color: Colors.white,
-                              size: 18,
-                            ),
+                                child: const Icon(
+                                  Icons.restaurant,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               const Text(
@@ -125,7 +135,10 @@ class DailyActivity extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(dietaPrincipal, style: const TextStyle(color: Colors.grey)),
+                          Text(
+                            dietaPrincipal,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),
@@ -166,7 +179,10 @@ class DailyActivity extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(citaPrincipal, style: const TextStyle(color: Colors.grey)),
+                          Text(
+                            citaPrincipal,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),

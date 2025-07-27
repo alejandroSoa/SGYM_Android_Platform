@@ -3,11 +3,68 @@ import '../widgets/day_advice.dart';
 import '../widgets/daily_activity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/UserService.dart';
+import '../services/RoutineService.dart';
+import '../interfaces/bussiness/routine_interface.dart';
 import '../main.dart';
 import 'package:flutter/services.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Routine> userRoutines = [];
+  bool isLoadingRoutines = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRoutines();
+  }
+
+  Future<void> _loadUserRoutines() async {
+    setState(() {
+      isLoadingRoutines = true;
+    });
+
+    try {
+      final routines = await RoutineService.fetchUserRecentRoutines();
+      setState(() {
+        userRoutines = routines ?? [];
+        isLoadingRoutines = false;
+      });
+    } catch (e) {
+      print('Error al cargar rutinas del usuario: $e');
+      setState(() {
+        isLoadingRoutines = false;
+      });
+    }
+  }
+
+  List<String> _getRoutineNames() {
+    if (isLoadingRoutines) {
+      return ['Cargando rutinas...', '', '', '', ''];
+    }
+
+    if (userRoutines.isEmpty) {
+      return ['Sin rutinas creadas', '', '', '', ''];
+    }
+
+    List<String> routineNames = userRoutines
+        .map((routine) => routine.name)
+        .toList();
+
+    // Completar con strings vacíos hasta tener 5 elementos
+    while (routineNames.length < 5) {
+      routineNames.add('');
+    }
+
+    // Tomar solo los primeros 5
+    return routineNames.take(5).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +73,9 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         
           const SizedBox(height: 12),
           Stack(
             children: [
-              
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: Image.asset(
@@ -45,19 +100,20 @@ class HomeScreen extends StatelessWidget {
               Positioned(
                 top: 16,
                 right: 16,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  radius: 12,
-                ),
+                child: CircleAvatar(backgroundColor: Colors.white, radius: 12),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          DayAdvice(color: Color.fromARGB(255, 122, 90, 249), frase: 'Si la vida te da limones, haz limonada 4K'),
+          DayAdvice(
+            color: Color.fromARGB(255, 122, 90, 249),
+            frase: 'Si la vida te da limones, haz limonada 4K',
+          ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () {
-              final mainLayoutState = context.findAncestorStateOfType<State<MainLayout>>();
+              final mainLayoutState = context
+                  .findAncestorStateOfType<State<MainLayout>>();
               if (mainLayoutState != null) {
                 (mainLayoutState as dynamic).setState(() {
                   (mainLayoutState as dynamic).currentIndex = 4;
@@ -72,7 +128,11 @@ class HomeScreen extends StatelessWidget {
               ),
               child: Row(
                 children: const [
-                  Icon(Icons.qr_code_2_rounded, size: 36, color: Color(0xFF7A5AF9)),
+                  Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 36,
+                    color: Color(0xFF7A5AF9),
+                  ),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -91,8 +151,8 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           DailyActivity(
-            ejercicios: ['Ejercicio 1', 'Ejercicio 2', 'Ejercicio 3', 'Ejercicio 4', 'Ejercicio 5'],
-            totalEjercicios: 20,
+            ejercicios: _getRoutineNames(),
+            totalEjercicios: userRoutines.length,
             dietaPrincipal: 'Ensalada con proteína',
             citaPrincipal: 'Consulta coach a las 4:00 PM',
           ),
@@ -131,11 +191,13 @@ class HomeScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        
+
                         // User Info Section
-                        if (userSnapshot.connectionState == ConnectionState.waiting)
+                        if (userSnapshot.connectionState ==
+                            ConnectionState.waiting)
                           const Text('Cargando información del usuario...')
-                        else if (userSnapshot.hasData && userSnapshot.data != null)
+                        else if (userSnapshot.hasData &&
+                            userSnapshot.data != null)
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -148,7 +210,11 @@ class HomeScreen extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.person, size: 16, color: Color(0xFF7A5AF9)),
+                                    const Icon(
+                                      Icons.person,
+                                      size: 16,
+                                      color: Color(0xFF7A5AF9),
+                                    ),
                                     const SizedBox(width: 8),
                                     const Text(
                                       'Usuario:',
@@ -163,11 +229,17 @@ class HomeScreen extends StatelessWidget {
                                 const SizedBox(height: 8),
                                 Text(
                                   'ID: ${userSnapshot.data!['id'] ?? 'N/A'}',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF666666),
+                                  ),
                                 ),
                                 Text(
                                   'Email: ${userSnapshot.data!['email'] ?? 'N/A'}',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF666666),
+                                  ),
                                 ),
                               ],
                             ),
@@ -182,21 +254,28 @@ class HomeScreen extends StatelessWidget {
                             ),
                             child: const Text(
                               'No hay información del usuario disponible',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF666666)),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF666666),
+                              ),
                             ),
                           ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         // Token Section
                         GestureDetector(
                           onTap: () async {
                             final token = tokenSnapshot.data;
                             if (token != null && token.isNotEmpty) {
-                              await Clipboard.setData(ClipboardData(text: token));
+                              await Clipboard.setData(
+                                ClipboardData(text: token),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Token copiado al portapapeles'),
+                                  content: Text(
+                                    'Token copiado al portapapeles',
+                                  ),
                                   backgroundColor: Color(0xFF7A5AF9),
                                   duration: Duration(seconds: 2),
                                 ),
@@ -215,7 +294,11 @@ class HomeScreen extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.key, size: 16, color: Color(0xFF7A5AF9)),
+                                    const Icon(
+                                      Icons.key,
+                                      size: 16,
+                                      color: Color(0xFF7A5AF9),
+                                    ),
                                     const SizedBox(width: 8),
                                     const Text(
                                       'Token:',
@@ -235,9 +318,11 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  tokenSnapshot.connectionState == ConnectionState.waiting
+                                  tokenSnapshot.connectionState ==
+                                          ConnectionState.waiting
                                       ? 'Cargando token...'
-                                      : tokenSnapshot.data ?? 'No hay token disponible',
+                                      : tokenSnapshot.data ??
+                                            'No hay token disponible',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontFamily: 'monospace',
@@ -257,7 +342,6 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-
         ],
       ),
     );
@@ -273,7 +357,7 @@ class _ClearPreferencesButton extends StatelessWidget {
         onPressed: () async {
           final prefs = await SharedPreferences.getInstance();
           await prefs.remove('first-init-app');
-         
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Boton de prueba para borrar shared preferences.'),
