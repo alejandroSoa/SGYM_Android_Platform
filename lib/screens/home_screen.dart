@@ -153,6 +153,36 @@ class _HomeScreenState extends State<HomeScreen> {
             totalEjercicios: userRoutines.length,
             dietaPrincipal: 'Ensalada con proteína',
             citaPrincipal: 'Consulta coach a las 4:00 PM',
+            onRutinaTap: () {
+              final mainLayoutState = context
+                  .findAncestorStateOfType<State<MainLayout>>();
+              if (mainLayoutState != null) {
+                (mainLayoutState as dynamic).setState(() {
+                  (mainLayoutState as dynamic).currentIndex =
+                      3; // Pestaña de Rutinas
+                });
+              }
+            },
+            onDietaTap: () {
+              final mainLayoutState = context
+                  .findAncestorStateOfType<State<MainLayout>>();
+              if (mainLayoutState != null) {
+                (mainLayoutState as dynamic).setState(() {
+                  (mainLayoutState as dynamic).currentIndex =
+                      2; // Pestaña de Dietas
+                });
+              }
+            },
+            onCitasTap: () {
+              final mainLayoutState = context
+                  .findAncestorStateOfType<State<MainLayout>>();
+              if (mainLayoutState != null) {
+                (mainLayoutState as dynamic).setState(() {
+                  (mainLayoutState as dynamic).currentIndex =
+                      1; // Pestaña de Citas
+                });
+              }
+            },
           ),
           const SizedBox(height: 12),
 
@@ -166,7 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Datos del usuario borrados (Logout simulado)'),
+                    content: Text(
+                      'Datos del usuario borrados (Logout simulado)',
+                    ),
                     backgroundColor: Colors.green,
                   ),
                 );
