@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/day_advice.dart';
 import '../widgets/daily_activity.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../services/UserService.dart';
 import '../services/RoutineService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../main.dart';
-import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -157,236 +155,47 @@ class _HomeScreenState extends State<HomeScreen> {
             citaPrincipal: 'Consulta coach a las 4:00 PM',
           ),
           const SizedBox(height: 12),
-          _ClearPreferencesButton(),
-          const SizedBox(height: 12),
 
-          FutureBuilder<String?>(
-            future: UserService.getToken(),
-            builder: (context, tokenSnapshot) {
-              return FutureBuilder<Map<String, dynamic>?>(
-                future: UserService.getUser(),
-                builder: (context, userSnapshot) {
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFEDF0F3),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Color(0xFFDBE0E5)),
+          // Botón de logout/borrar datos de usuario
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            child: ElevatedButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('first-init-app');
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Datos del usuario borrados (Logout simulado)'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.logout, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.token, color: Color(0xFF7A5AF9)),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Beta Test',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Color(0xFF413477),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // User Info Section
-                        if (userSnapshot.connectionState ==
-                            ConnectionState.waiting)
-                          const Text('Cargando información del usuario...')
-                        else if (userSnapshot.hasData &&
-                            userSnapshot.data != null)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Color(0xFFDBE0E5)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.person,
-                                      size: 16,
-                                      color: Color(0xFF7A5AF9),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Usuario:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: Color(0xFF413477),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'ID: ${userSnapshot.data!['id'] ?? 'N/A'}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF666666),
-                                  ),
-                                ),
-                                Text(
-                                  'Email: ${userSnapshot.data!['email'] ?? 'N/A'}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF666666),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Color(0xFFDBE0E5)),
-                            ),
-                            child: const Text(
-                              'No hay información del usuario disponible',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF666666),
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 12),
-
-                        // Token Section
-                        GestureDetector(
-                          onTap: () async {
-                            final token = tokenSnapshot.data;
-                            if (token != null && token.isNotEmpty) {
-                              await Clipboard.setData(
-                                ClipboardData(text: token),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Token copiado al portapapeles',
-                                  ),
-                                  backgroundColor: Color(0xFF7A5AF9),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Color(0xFFDBE0E5)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.key,
-                                      size: 16,
-                                      color: Color(0xFF7A5AF9),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Token:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        color: Color(0xFF413477),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(
-                                      Icons.copy,
-                                      size: 16,
-                                      color: Color(0xFF7A5AF9),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  tokenSnapshot.connectionState ==
-                                          ConnectionState.waiting
-                                      ? 'Cargando token...'
-                                      : tokenSnapshot.data ??
-                                            'No hay token disponible',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontFamily: 'monospace',
-                                    color: Color(0xFF333333),
-                                  ),
-                                  maxLines: 4,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClearPreferencesButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      child: ElevatedButton(
-        onPressed: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.remove('first-init-app');
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Boton de prueba para borrar shared preferences.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.delete_forever, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
-              'Borrar User Beta Test',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
