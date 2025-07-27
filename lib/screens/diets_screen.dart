@@ -1795,56 +1795,66 @@ class _DietsScreenState extends State<DietsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: widget.onBack ?? () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Dietas',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sección de Alimentos en contenedor destacado
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCAD1D9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con título y botón de regreso
+              Row(
                 children: [
-                  const Text(
-                    'Alimentos',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                    onPressed: widget.onBack ?? () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Dietas',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _buildFoodsSection(),
+                  const SizedBox(
+                    width: 48,
+                  ), // Para balancear el espacio del IconButton
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
-            // Sección de Dietas
-            _buildDietsSection(),
-          ],
+              const SizedBox(height: 20),
+
+              // Sección de Alimentos en contenedor destacado
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCAD1D9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Alimentos',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildFoodsSection(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Sección de Dietas
+              _buildDietsSection(),
+            ],
+          ),
         ),
       ),
     );

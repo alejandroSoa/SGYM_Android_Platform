@@ -504,22 +504,41 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: widget.onBack ?? () => Navigator.pop(context),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con título y botón de regreso
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+                    onPressed: widget.onBack ?? () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Text(
+                      'Dietas',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 48,
+                  ), // Para balancear el espacio del IconButton
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              _buildDietsSection(),
+            ],
+          ),
         ),
-        title: const Text(
-          'Dietas',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: _buildDietsSection(),
       ),
     );
   }
