@@ -18,6 +18,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/NotificationService.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 // Handler para notificaciones en background
 @pragma('vm:entry-point')
@@ -43,6 +44,16 @@ void main() async {
 
   // Inicializar servicio de notificaciones
   await NotificationService.initialize();
+
+  // Configurar Stripe
+  try {
+    Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+    await Stripe.instance.applySettings();
+    print('[STRIPE] Inicializado correctamente');
+  } catch (e) {
+    print('[STRIPE] Error al inicializar: $e');
+    // La app puede continuar sin Stripe, solo los pagos no funcionarán
+  }
 
   final isFirstTime = await InitializationService.isFirstTimeUser();
   runApp(MyApp(isFirstTime: isFirstTime));
