@@ -4,6 +4,7 @@ import '../interfaces/bussiness/food_interface.dart';
 import '../services/DietService.dart';
 import '../services/FoodService.dart';
 import '../services/UserService.dart';
+import '../services/NotificationService.dart';
 
 class DietsScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -1564,6 +1565,18 @@ class _DietsScreenState extends State<DietsScreen> {
 
       if (newDiet != null) {
         await _loadDiets();
+
+        // Enviar notificación al usuario
+        try {
+          await NotificationService.sendDietAssignedNotification(
+            userId: userId,
+          );
+          print('Notificación de dieta enviada al usuario $userId');
+        } catch (notificationError) {
+          print('Error al enviar notificación: $notificationError');
+          // No mostrar error al usuario, solo loggearlo
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Dieta "$name" creada exitosamente'),

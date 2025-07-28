@@ -4,6 +4,7 @@ import '../interfaces/bussiness/routine_interface.dart';
 import '../services/ExerciseService.dart';
 import '../services/RoutineService.dart';
 import '../services/UserService.dart';
+import '../services/NotificationService.dart';
 
 class RoutinesScreen extends StatefulWidget {
   final bool showExerciseButton;
@@ -1056,6 +1057,17 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
       if (newRoutine != null) {
         // Recargar las rutinas para mostrar la nueva
         await _loadRoutines();
+
+        // Enviar notificación al usuario
+        try {
+          await NotificationService.sendRoutineAssignedNotification(
+            userId: userId,
+          );
+          print('Notificación de rutina enviada al usuario $userId');
+        } catch (notificationError) {
+          print('Error al enviar notificación: $notificationError');
+          // No mostrar error al usuario, solo loggearlo
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

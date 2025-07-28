@@ -186,4 +186,75 @@ class NotificationService {
         break;
     }
   }
+
+  // Método genérico para solicitar al backend que envíe una notificación
+  static Future<void> sendNotificationToBackend({
+    required int userId,
+    required String type,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final url = '$_baseUrl/notifications/send';
+      final requestBody = {
+        'user_id': userId,
+        'type': type,
+        'title': title,
+        'body': body,
+        'data': data ?? {},
+      };
+
+      print('=== ENVIANDO NOTIFICACIÓN AL BACKEND ===');
+      print('URL: $url');
+      print('Usuario ID: $userId');
+      print('Tipo: $type');
+      print('Título: $title');
+      print('Mensaje: $body');
+      print('Data adicional: $data');
+      print('=======================================');
+
+      final response = await NetworkService.post(url, body: requestBody);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(
+          '[NOTIFICATION_SERVICE] Notificación enviada exitosamente al backend',
+        );
+        print('[NOTIFICATION_SERVICE] Respuesta: ${response.body}');
+      } else {
+        print(
+          '[NOTIFICATION_SERVICE] Error enviando notificación: ${response.statusCode}',
+        );
+        print('[NOTIFICATION_SERVICE] Respuesta: ${response.body}');
+      }
+    } catch (e) {
+      print('[NOTIFICATION_SERVICE] Error en sendNotificationToBackend: $e');
+    }
+  }
+
+  // Método específico para rutina asignada
+  static Future<void> sendRoutineAssignedNotification({
+    required int userId,
+  }) async {
+    await sendNotificationToBackend(
+      userId: userId,
+      type: 'routine_assigned',
+      title: '💪 Nueva Rutina Asignada',
+      body: 'Tu entrenador ha asignado una nueva rutina.',
+      data: {'type': 'routine_assigned', 'target_screen': 'routines'},
+    );
+  }
+
+  // Método específico para dieta asignada
+  static Future<void> sendDietAssignedNotification({
+    required int userId,
+  }) async {
+    await sendNotificationToBackend(
+      userId: userId,
+      type: 'diet_assigned',
+      title: '🥗 Nueva Dieta Asignada',
+      body: 'Tu nutriólogo ha asignado una nueva dieta.',
+      data: {'type': 'diet_assigned', 'target_screen': 'diets'},
+    );
+  }
 }
