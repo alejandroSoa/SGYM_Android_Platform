@@ -13,13 +13,17 @@ class PaymentMethodService {
     final response = await NetworkService.get(fullUrl);
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'] as List;
-      return data.map((e) => PaymentMethod(
-        id: e['id'],
-        code: e['code'],
-        name: e['name'],
-        description: e['description'],
-        isActive: e['is_active'],
-      )).toList();
+      return data
+          .map(
+            (e) => PaymentMethod(
+              id: e['id'],
+              code: e['code'],
+              name: e['name'],
+              description: e['description'],
+              isActive: e['is_active'],
+            ),
+          )
+          .toList();
     }
     return null;
   }
@@ -181,24 +185,30 @@ class PaymentMethodService {
   }
 
   // Listar métodos de pago del usuario
-  static Future<UserPaymentMethodList?> fetchUserPaymentMethods(int userId) async {
+  static Future<UserPaymentMethodList?> fetchUserPaymentMethods(
+    int userId,
+  ) async {
     final fullUrl = '$_baseUrl/user-payment-methods?user_id=$userId';
     final response = await NetworkService.get(fullUrl);
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'] as List;
-      return data.map((e) => UserPaymentMethod(
-        id: e['id'],
-        userId: e['user_id'],
-        customerId: e['customer_id'],
-        paymentMethodId: e['payment_method_id'],
-        brand: e['brand'],
-        last4: e['last4'],
-        expMonth: int.tryParse(e['exp_month'].toString()) ?? 0,
-        expYear: e['exp_year'],
-        isDefault: e['is_default'],
-        createdAt: e['created_at'],
-        updatedAt: e['updated_at'],
-      )).toList();
+      return data
+          .map(
+            (e) => UserPaymentMethod(
+              id: e['id'],
+              userId: e['user_id'],
+              customerId: e['customer_id'],
+              paymentMethodId: e['payment_method_id'],
+              brand: e['brand'],
+              last4: e['last4'],
+              expMonth: int.tryParse(e['exp_month'].toString()) ?? 0,
+              expYear: e['exp_year'],
+              isDefault: e['is_default'],
+              createdAt: e['created_at'],
+              updatedAt: e['updated_at'],
+            ),
+          )
+          .toList();
     }
     return null;
   }
@@ -211,7 +221,7 @@ class PaymentMethodService {
   }
 
   // ...existing imports...
-// ...existing class PaymentMethodService...
+  // ...existing class PaymentMethodService...
 
   // Crear solicitud de pago
   static Future<Map<String, dynamic>?> createPaymentRequest({
@@ -302,6 +312,7 @@ class PaymentMethodService {
     return null;
   }
 
+  // Consultar pagos
   static Future<List<Map<String, dynamic>>?> fetchPayments({
     int? userId,
     String? status,
