@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "171160385453",
+    "project_id": "proyectoigmar",
+    "storage_bucket": "proyectoigmar.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:171160385453:android:b3aca3655c75d38e631324",
+        "android_client_info": {
+          "package_name": "com.example.sgym"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3M4VI9Hw48eHfT2WoUi9hYq0Zucsk9kM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

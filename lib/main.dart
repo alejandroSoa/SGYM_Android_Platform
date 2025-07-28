@@ -14,6 +14,17 @@ import 'services/AuthService.dart';
 import 'services/RoleConfigService.dart';
 import 'services/UserService.dart';
 import 'services/ProfileService.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'services/NotificationService.dart';
+
+// Handler para notificaciones en background
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('[BACKGROUND] Notificación recibida: ${message.messageId}');
+}
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -23,6 +34,16 @@ void main() async {
   //si tiene el token invalido actualizar en base a el servicio, mas no cerrarle o pedirle que vuelva a iniciar sesion
   //Agregar middleware conection para ajustar que en cada ruta mande token y verifique cada q realiza una peticion el status del token y actualizarlo si es necesario.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Configurar handler para notificaciones en background
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Inicializar servicio de notificaciones
+  await NotificationService.initialize();
+
   final isFirstTime = await InitializationService.isFirstTimeUser();
   runApp(MyApp(isFirstTime: isFirstTime));
 }
