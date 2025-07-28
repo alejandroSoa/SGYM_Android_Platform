@@ -3,8 +3,9 @@ import '../widgets/day_advice.dart';
 import '../widgets/daily_activity.dart';
 import '../services/RoutineService.dart';
 import '../services/DietService.dart';
+import '../services/AppointmentService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
-import '../interfaces/bussiness/diet_interface.dart';
+import '../interfaces/bussiness/appointment_interface.dart';
 import '../main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,12 +22,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> userDiets = [];
   bool isLoadingDiets = false;
   String todayDietName = 'Sin dieta para hoy';
+  List<UserTrainerAppointment> userAppointments = [];
+  bool isLoadingAppointments = false;
+  String todayAppointmentText = 'Sin citas para hoy';
 
   @override
   void initState() {
     super.initState();
     _loadUserRoutines();
     _loadUserDiets();
+    _loadUserAppointments();
   }
 
   Future<void> _loadUserRoutines() async {
@@ -73,6 +78,35 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         isLoadingDiets = false;
         todayDietName = 'Error al cargar dieta';
+      });
+    }
+  }
+
+  Future<void> _loadUserAppointments() async {
+    setState(() {
+      isLoadingAppointments = true;
+    });
+
+    try {
+      print('=== DEBUG CITAS: Iniciando carga de citas ===');
+      final appointments = await AppointmentService.fetchUserAppointments();
+      print('=== DEBUG CITAS: Respuesta recibida ===');
+      print('Citas recibidas: $appointments');
+      print('Tipo de respuesta: ${appointments.runtimeType}');
+      print('Cantidad de citas: ${appointments?.length ?? 0}');
+
+      setState(() {
+        userAppointments = appointments ?? [];
+        isLoadingAppointments = false;
+        _updateTodayAppointment();
+      });
+    } catch (e) {
+      print('=== DEBUG CITAS: Error al cargar citas ===');
+      print('Error completo: $e');
+      print('Tipo de error: ${e.runtimeType}');
+      setState(() {
+        isLoadingAppointments = false;
+        todayAppointmentText = 'Error al cargar citas';
       });
     }
   }
@@ -127,6 +161,49 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         todayDietName = 'Sin dieta para hoy';
         print('No se encontró dieta para el día: $today');
+      }
+    });
+  }
+
+  void _updateTodayAppointment() {
+    print('=== DEBUG CITAS: Actualizando cita del día ===');
+
+    if (isLoadingAppointments) {
+      print('Aún cargando citas...');
+      setState(() {
+        todayAppointmentText = 'Cargando citas...';
+      });
+      return;
+    }
+
+    final today = DateTime.now();
+    final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    print('Fecha actual: $todayString');
+    print('Total de citas disponibles: ${userAppointments.length}');
+
+    // Mostrar todas las citas disponibles
+    for (int i = 0; i < userAppointments.length; i++) {
+      final appointment = userAppointments[i];
+      print('Cita $i: ID ${appointment.id} - Fecha: ${appointment.date} - Hora: ${appointment.startTime}');
+    }
+
+    final todayAppointments = userAppointments.where((appointment) {
+      print('Comparando: "${appointment.date}" == "$todayString"');
+      return appointment.date == todayString;
+    }).toList();
+
+    print('Citas encontradas para hoy: ${todayAppointments.length}');
+
+    setState(() {
+      if (todayAppointments.isNotEmpty) {
+        final appointment = todayAppointments.first;
+        // Formatear la hora para mostrar solo hora:minutos
+        final startTime = appointment.startTime.substring(0, 5); // "10:00:00" -> "10:00"
+        todayAppointmentText = 'Cita a las $startTime';
+        print('Cita seleccionada: $todayAppointmentText');
+      } else {
+        todayAppointmentText = 'Sin citas para hoy';
+        print('No se encontró cita para el día: $todayString');
       }
     });
   }
@@ -241,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ejercicios: _getRoutineNames(),
             totalEjercicios: userRoutines.length,
             dietaPrincipal: todayDietName,
-            citaPrincipal: 'Consulta coach a las 4:00 PM',
+            citaPrincipal: todayAppointmentText,
             onRutinaTap: () {
               final mainLayoutState = context
                   .findAncestorStateOfType<State<MainLayout>>();
