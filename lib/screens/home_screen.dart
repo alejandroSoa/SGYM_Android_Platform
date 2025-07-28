@@ -4,6 +4,7 @@ import '../widgets/daily_activity.dart';
 import '../services/RoutineService.dart';
 import '../services/DietService.dart';
 import '../services/AppointmentService.dart';
+import '../services/GymStatusService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../interfaces/bussiness/appointment_interface.dart';
 import '../main.dart';
@@ -25,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<UserTrainerAppointment> userAppointments = [];
   bool isLoadingAppointments = false;
   String todayAppointmentText = 'Sin citas para hoy';
+  String gymOccupancyText = 'Cargando ocupación...';
+  bool isLoadingOccupancy = false;
 
   @override
   void initState() {
@@ -32,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserRoutines();
     _loadUserDiets();
     _loadUserAppointments();
+    _loadGymOccupancy();
   }
 
   Future<void> _loadUserRoutines() async {
@@ -111,6 +115,71 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadGymOccupancy() async {
+    setState(() {
+      isLoadingOccupancy = true;
+    });
+
+    try {
+      print(
+        '=== DEBUG OCUPACIÓN: Iniciando carga de ocupación del gimnasio ===',
+      );
+
+      // Obtener solo los registros del día actual
+      final today = DateTime.now();
+      final todayString =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      final occupancyRecords = await GymStatusService.fetchOccupancyRecords(
+        startDate: todayString,
+        endDate: todayString,
+      );
+
+      print('=== DEBUG OCUPACIÓN: Respuesta recibida ===');
+      print('Registros recibidos: $occupancyRecords');
+      print('Cantidad de registros: ${occupancyRecords?.length ?? 0}');
+
+      setState(() {
+        isLoadingOccupancy = false;
+        if (occupancyRecords != null && occupancyRecords.isNotEmpty) {
+          // Tomar el registro más reciente del día
+          final latestRecord = occupancyRecords.last;
+          final level = latestRecord['level'] ?? 'unknown';
+          final peopleCount = latestRecord['people_count'] ?? 0;
+
+          // Formatear el texto según el nivel de ocupación
+          switch (level.toLowerCase()) {
+            case 'low':
+              gymOccupancyText = 'Ocupación baja • $peopleCount personas';
+              break;
+            case 'medium':
+              gymOccupancyText = 'Ocupación media • $peopleCount personas';
+              break;
+            case 'high':
+              gymOccupancyText = 'Ocupación alta • $peopleCount personas';
+              break;
+            default:
+              gymOccupancyText = 'Ocupación: $peopleCount personas';
+          }
+          print('Texto de ocupación: $gymOccupancyText');
+        } else {
+          gymOccupancyText = 'Sin datos de ocupación hoy';
+          print('No se encontraron datos de ocupación para hoy');
+        }
+      });
+    } catch (e) {
+      print('=== DEBUG OCUPACIÓN: Error al cargar ocupación ===');
+      print('Error completo: $e');
+      print('Tipo de error: ${e.runtimeType}');
+
+      setState(() {
+        isLoadingOccupancy = false;
+        // Como la API aún no está disponible, mostramos un mensaje amigable
+        gymOccupancyText = 'Ocupación no disponible';
+      });
+    }
+  }
+
   String _getCurrentDayInEnglish() {
     final now = DateTime.now();
     final weekdays = [
@@ -177,14 +246,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final today = DateTime.now();
-    final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayString =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     print('Fecha actual: $todayString');
     print('Total de citas disponibles: ${userAppointments.length}');
 
     // Mostrar todas las citas disponibles
     for (int i = 0; i < userAppointments.length; i++) {
       final appointment = userAppointments[i];
-      print('Cita $i: ID ${appointment.id} - Fecha: ${appointment.date} - Hora: ${appointment.startTime}');
+      print(
+        'Cita $i: ID ${appointment.id} - Fecha: ${appointment.date} - Hora: ${appointment.startTime}',
+      );
     }
 
     final todayAppointments = userAppointments.where((appointment) {
@@ -198,7 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (todayAppointments.isNotEmpty) {
         final appointment = todayAppointments.first;
         // Formatear la hora para mostrar solo hora:minutos
-        final startTime = appointment.startTime.substring(0, 5); // "10:00:00" -> "10:00"
+        final startTime = appointment.startTime.substring(
+          0,
+          5,
+        ); // "10:00:00" -> "10:00"
         todayAppointmentText = 'Cita a las $startTime';
         print('Cita seleccionada: $todayAppointmentText');
       } else {
@@ -265,6 +340,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 top: 16,
                 right: 16,
                 child: CircleAvatar(backgroundColor: Colors.white, radius: 12),
+              ),
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.people, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          gymOccupancyText,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
