@@ -45,6 +45,7 @@ class _DietsScreenState extends State<DietsScreen> {
         foods = foodsList ?? [];
         isLoadingFoods = false;
       });
+      print("Alimentos cargados: $foods");
       print("Alimentos cargados: ${foods.length}");
     } catch (e) {
       setState(() {
@@ -63,12 +64,32 @@ class _DietsScreenState extends State<DietsScreen> {
 
     try {
       final dietsList = await DietService.fetchDiets();
+      print("Lista de dietas extraída: $dietsList");
+      print("Cantidad de dietas: ${dietsList?.length ?? 0}");
+
       setState(() {
-        realDiets =
-            dietsList?.map((dietMap) => Diet.fromJson(dietMap)).toList() ?? [];
+        if (dietsList != null) {
+          realDiets = [];
+          for (var dietMap in dietsList) {
+            try {
+              print("Procesando dieta: $dietMap");
+              final diet = Diet.fromJson(dietMap);
+              realDiets.add(diet);
+              print("Dieta procesada exitosamente: ${diet.name}");
+            } catch (dietError) {
+              print("Error al procesar dieta individual: $dietError");
+              print("Datos de la dieta problemática: $dietMap");
+              // Continúa con las otras dietas en lugar de fallar completamente
+            }
+          }
+        } else {
+          realDiets = [];
+        }
         isLoadingDiets = false;
       });
-      print("Dietas cargadas: ${realDiets.length}");
+      print(
+        "Resultado final: ${realDiets.length} dietas cargadas exitosamente",
+      );
     } catch (e) {
       setState(() {
         dietsError = e.toString();
@@ -415,21 +436,27 @@ class _DietsScreenState extends State<DietsScreen> {
                     label: 'Calorías',
                     value: '${food.calories} cal',
                   ),
-                  if (food.otherInfo != null && food.otherInfo!.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Información adicional',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Información adicional',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    food.otherInfo?.isNotEmpty == true
+                        ? food.otherInfo!
+                        : 'Sin información adicional',
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      fontStyle: food.otherInfo?.isNotEmpty == true
+                          ? FontStyle.normal
+                          : FontStyle.italic,
+                      color: food.otherInfo?.isNotEmpty == true
+                          ? Colors.black
+                          : Colors.grey[600],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      food.otherInfo!,
-                      style: const TextStyle(fontSize: 16, height: 1.5),
-                    ),
-                  ],
+                  ),
                   const SizedBox(height: 24),
                   // Botón de Editar
                   SizedBox(
@@ -527,12 +554,6 @@ class _DietsScreenState extends State<DietsScreen> {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _DetailRow(
-                    icon: Icons.calendar_today,
-                    label: 'Día',
-                    value: _convertDayToSpanish(diet.day),
                   ),
                   const SizedBox(height: 20),
                   Row(

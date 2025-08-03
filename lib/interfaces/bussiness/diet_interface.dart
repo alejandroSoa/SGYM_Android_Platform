@@ -16,10 +16,10 @@ class Diet {
   factory Diet.fromJson(Map<String, dynamic> json) {
     return Diet(
       id: json['id'],
-      day: json['day'],
-      name: json['name'],
+      day: json['day'] ?? 'Sin día', // Valor por defecto si es null
+      name: json['name'] ?? 'Sin nombre', // Valor por defecto si es null
       description: json['description'],
-      userId: json['user_id'],
+      userId: json['user_id'] ?? 0, // Valor por defecto si es null
     );
   }
 
