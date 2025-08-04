@@ -76,9 +76,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
       });
       print("Rutinas cargadas: ${realRoutines.length}");
       for (var routine in realRoutines) {
-        print(
-          "Rutina: ${routine.name}",
-        );
+        print("Rutina: ${routine.name}");
       }
     } catch (e) {
       setState(() {
@@ -1850,7 +1848,8 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
                   itemCount: routineExercises.length,
                   itemBuilder: (context, index) {
                     final routineExercise = routineExercises[index];
-                    final exercise = routineExercise['exercise'] as Map<String, dynamic>?;
+                    final exercise =
+                        routineExercise['exercise'] as Map<String, dynamic>?;
 
                     // Mostrar datos directos del API
                     print('🎯 Mostrando ejercicio $index: $routineExercise');
