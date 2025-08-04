@@ -24,7 +24,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     super.initState();
     // Inicializar con la fecha de hoy
     final today = DateTime.now();
-    selectedDate = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    selectedDate =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     _loadAppointments();
   }
 
@@ -863,7 +864,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             children: [
               Text(
                 _isToday() ? 'Citas de hoy' : 'Citas del día seleccionado',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               if (!isLoadingAppointments && errorMessage == null)
                 IconButton(
@@ -917,10 +921,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     ),
                     child: Center(
                       child: Text(
-                        _isToday() 
-                          ? 'Hoy no tienes citas agendadas!' 
-                          : 'No hay citas agendadas para este día',
-                        style: const TextStyle(color: Colors.black54, fontSize: 16),
+                        _isToday()
+                            ? 'Hoy no tienes citas agendadas!'
+                            : 'No hay citas agendadas para este día',
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   );
@@ -1134,7 +1141,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   // Método para verificar si la fecha seleccionada es hoy
   bool _isToday() {
     final today = DateTime.now();
-    final todayString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayString =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     return selectedDate == todayString;
   }
 
@@ -1184,7 +1192,7 @@ class _WeeklyCalendar extends StatefulWidget {
   final Function(String) onDateSelected;
 
   const _WeeklyCalendar({
-    this.userRoleId, 
+    this.userRoleId,
     this.onCreateAppointment,
     required this.appointments,
     required this.onDateSelected,
@@ -1212,7 +1220,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
     final today = DateTime.now();
     // Calcular el lunes de la semana actual
     final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
-    
+
     return List.generate(7, (index) {
       return startOfWeek.add(Duration(days: index));
     });
@@ -1242,7 +1250,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
     final selectedDateString = _getSelectedDateString();
     return widget.appointments.where((appointment) {
       String appointmentDate = '';
-      
+
       if (appointment is TrainerAppointment) {
         appointmentDate = appointment.date;
       } else if (appointment is NutritionistAppointment) {
@@ -1250,7 +1258,7 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
       } else if (appointment is UserTrainerAppointment) {
         appointmentDate = appointment.date;
       }
-      
+
       return appointmentDate == selectedDateString;
     }).toList();
   }
@@ -1318,23 +1326,29 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                     children: selectedAppointments.map((appointment) {
                       String title = '';
                       String time = '';
-                      
+
                       if (appointment is TrainerAppointment) {
                         title = 'Sesión de Entrenamiento';
-                        time = '${appointment.startTime} - ${appointment.endTime}';
+                        time =
+                            '${appointment.startTime} - ${appointment.endTime}';
                       } else if (appointment is NutritionistAppointment) {
                         title = 'Consulta Nutricional';
-                        time = '${appointment.startTime} - ${appointment.endTime}';
+                        time =
+                            '${appointment.startTime} - ${appointment.endTime}';
                       } else if (appointment is UserTrainerAppointment) {
                         title = 'Sesión con Entrenador';
-                        time = '${appointment.startTime} - ${appointment.endTime}';
+                        time =
+                            '${appointment.startTime} - ${appointment.endTime}';
                       }
-                      
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Text(
                           '$title - $time',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12,
+                          ),
                         ),
                       );
                     }).toList(),
@@ -1368,8 +1382,8 @@ class _DayCircle extends StatelessWidget {
   final bool isToday;
 
   const _DayCircle({
-    required this.text, 
-    this.selected = false, 
+    required this.text,
+    this.selected = false,
     this.isToday = false,
   });
 
@@ -1377,7 +1391,7 @@ class _DayCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     Color backgroundColor;
     Color textColor;
-    
+
     if (selected) {
       backgroundColor = Colors.deepPurple;
       textColor = Colors.white;
@@ -1394,10 +1408,7 @@ class _DayCircle extends StatelessWidget {
       backgroundColor: backgroundColor,
       child: Text(
         text,
-        style: TextStyle(
-          color: textColor,
-          fontWeight: FontWeight.w500,
-        ),
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
       ),
     );
   }
