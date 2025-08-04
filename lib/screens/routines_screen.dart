@@ -3,8 +3,6 @@ import '../interfaces/exercises/exercise_interface.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../services/ExerciseService.dart';
 import '../services/RoutineService.dart';
-import '../services/UserService.dart';
-import '../services/NotificationService.dart';
 
 class RoutinesScreen extends StatefulWidget {
   final bool showExerciseButton;
@@ -79,7 +77,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
       print("Rutinas cargadas: ${realRoutines.length}");
       for (var routine in realRoutines) {
         print(
-          "Rutina: ${routine.name} - Día: ${_convertDayToSpanish(routine.day)}",
+          "Rutina: ${routine.name}",
         );
       }
     } catch (e) {
@@ -218,11 +216,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Día: ${_convertDayToSpanish(routine.day)}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
                       if (routine.description != null &&
                           routine.description!.isNotEmpty) ...[
                         const SizedBox(height: 4),
@@ -243,98 +236,58 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
         ],
       );
     } else {
-      // Vista para usuarios organizadas por día
-      final routinesByDay = _organizeRoutinesByDay();
-
+      // Vista simple para usuarios (igual que trainers pero sin botón de agregar)
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: routinesByDay.entries.map((dayEntry) {
-          final day = dayEntry.key;
-          final dayRoutines = dayEntry.value;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Encabezado del día
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: dayRoutines.isEmpty ? Colors.grey[200] : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: dayRoutines.isEmpty
-                      ? null
-                      : Border.all(color: Colors.grey[300]!),
-                ),
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: dayRoutines.isEmpty
-                        ? Colors.grey[500]
-                        : Colors.black87,
+        children: [
+          // Lista de rutinas reales
+          ...realRoutines.map(
+            (routine) => Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8E5FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                onTap: () {
+                  _showRoutineDetails(context, routine);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        routine.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (routine.description != null &&
+                          routine.description!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          routine.description!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-
-              // Rutinas del día
-              if (dayRoutines.isNotEmpty) ...[
-                ...dayRoutines.map((routine) {
-                  return Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8E5FF),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        _showRoutineDetails(context, routine);
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              routine.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            if (routine.description != null &&
-                                routine.description!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                routine.description!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ],
-
-              const SizedBox(height: 16),
-            ],
-          );
-        }).toList(),
+            ),
+          ),
+        ],
       );
     }
   }
@@ -1041,33 +994,18 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
 
   Future<void> _createRoutine({
     required String name,
-    required String day,
     String? description,
-    required int userId, // Ahora recibe el userId como parámetro
   }) async {
     try {
-      // Crear la rutina usando el servicio con el userId seleccionado
+      // Crear la rutina usando el servicio solo con name y description
       final newRoutine = await RoutineService.createRoutine(
         name: name,
-        day: day,
         description: description,
-        userId: userId,
       );
 
       if (newRoutine != null) {
         // Recargar las rutinas para mostrar la nueva
         await _loadRoutines();
-
-        // Enviar notificación al usuario
-        try {
-          await NotificationService.sendRoutineAssignedNotification(
-            userId: userId,
-          );
-          print('Notificación de rutina enviada al usuario $userId');
-        } catch (notificationError) {
-          print('Error al enviar notificación: $notificationError');
-          // No mostrar error al usuario, solo loggearlo
-        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1094,28 +1032,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    }
-  }
-
-  // Convertir días del español al inglés para la API
-  String _convertDayToEnglish(String spanishDay) {
-    switch (spanishDay) {
-      case 'Lunes':
-        return 'monday';
-      case 'Martes':
-        return 'tuesday';
-      case 'Miércoles':
-        return 'wednesday';
-      case 'Jueves':
-        return 'thursday';
-      case 'Viernes':
-        return 'friday';
-      case 'Sábado':
-        return 'saturday';
-      case 'Domingo':
-        return 'sunday';
-      default:
-        return spanishDay.toLowerCase();
     }
   }
 
@@ -1179,12 +1095,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _DetailRow(
-                    icon: Icons.calendar_today,
-                    label: 'Día',
-                    value: _convertDayToSpanish(routine.day),
-                  ),
-                  const SizedBox(height: 20),
                   const Text(
                     'Descripción',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -1286,17 +1196,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     final descriptionController = TextEditingController(
       text: routine.description,
     );
-    String selectedDay = _convertDayToSpanish(routine.day);
-
-    final List<String> days = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo',
-    ];
 
     showDialog(
       context: context,
@@ -1315,27 +1214,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'Nombre de la rutina',
                         border: OutlineInputBorder(),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: selectedDay,
-                      decoration: const InputDecoration(
-                        labelText: 'Día de la semana',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: days.map((day) {
-                        return DropdownMenuItem<String>(
-                          value: day,
-                          child: Text(day),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        if (value != null) {
-                          setState(() {
-                            selectedDay = value;
-                          });
-                        }
-                      },
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -1373,7 +1251,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     await _updateRoutine(
                       id: routine.id,
                       name: nameController.text.trim(),
-                      day: _convertDayToEnglish(selectedDay),
                       description: descriptionController.text.trim(),
                     );
                   },
@@ -1394,14 +1271,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
   Future<void> _updateRoutine({
     required int id,
     required String name,
-    required String day,
     required String description,
   }) async {
     try {
       await RoutineService.updateRoutine(
         id: id,
         name: name,
-        day: day,
         description: description,
       );
 
@@ -1456,11 +1331,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Día: ${_convertDayToSpanish(routine.day)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                   ],
                 ),
@@ -1573,62 +1443,13 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
   void _showAddRoutineDialog() {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
-    String selectedDay = 'Lunes';
     bool isCreating = false;
-    bool isLoadingUsers = true;
-    List<Map<String, dynamic>> availableUsers = [];
-    Map<String, dynamic>? selectedUser;
-
-    final List<String> days = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo',
-    ];
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            // Cargar usuarios al abrir el diálogo
-            if (isLoadingUsers) {
-              UserService.getUsersByRole(5)
-                  .then((users) {
-                    print('Usuarios cargados: ${users?.length ?? 0}');
-                    if (users != null) {
-                      for (var user in users) {
-                        print(
-                          'Usuario: ${user['name']} - ${user['email']} - ID: ${user['id']}',
-                        );
-                      }
-                    }
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                      if (users != null && users.isNotEmpty) {
-                        availableUsers = users;
-                        selectedUser = users.first;
-                      }
-                    });
-                  })
-                  .catchError((error) {
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                    });
-                    print('Error loading users: $error');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al cargar usuarios: $error'),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  });
-            }
-
             return AlertDialog(
               title: const Text(
                 'Nueva Rutina',
@@ -1654,124 +1475,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de día
-                    const Text(
-                      'Día de la semana:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedDay,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      items: days.map((day) {
-                        return DropdownMenuItem(value: day, child: Text(day));
-                      }).toList(),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedDay = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Selector de usuario
-                    const Text(
-                      'Asignar a usuario:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (isLoadingUsers)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Cargando usuarios...'),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (availableUsers.isEmpty)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'No hay usuarios disponibles',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      )
-                    else
-                      DropdownButtonFormField<Map<String, dynamic>>(
-                        value: selectedUser,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
-                        ),
-                        items: availableUsers.map((user) {
-                          // Crear un texto más descriptivo para mostrar
-                          String displayText = '';
-                          if (user['name'] != null &&
-                              user['name'].toString().isNotEmpty) {
-                            displayText = user['name'];
-                            if (user['email'] != null) {
-                              displayText += ' (${user['email']})';
-                            }
-                          } else if (user['email'] != null) {
-                            displayText = user['email'];
-                          } else {
-                            displayText = 'Usuario ID: ${user['id']}';
-                          }
-
-                          return DropdownMenuItem(
-                            value: user,
-                            child: Text(
-                              displayText,
-                              style: const TextStyle(fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedUser = value;
-                          });
-                        },
-                      ),
-                    const SizedBox(height: 16),
-
-                    // Campo descripción (opcional)
+                    // Campo descripción
                     TextField(
                       controller: descriptionController,
                       maxLines: 3,
                       decoration: const InputDecoration(
-                        labelText: 'Descripción (opcional)',
+                        labelText: 'Descripción',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.description),
                         hintText: 'Describe la rutina...',
@@ -1786,8 +1495,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed:
-                      isCreating || isLoadingUsers || selectedUser == null
+                  onPressed: isCreating
                       ? null
                       : () async {
                           if (nameController.text.trim().isEmpty) {
@@ -1809,12 +1517,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
 
                           await _createRoutine(
                             name: nameController.text.trim(),
-                            day: _convertDayToEnglish(selectedDay),
                             description:
                                 descriptionController.text.trim().isEmpty
                                 ? null
                                 : descriptionController.text.trim(),
-                            userId: selectedUser!['id'] as int,
                           );
 
                           Navigator.pop(context);

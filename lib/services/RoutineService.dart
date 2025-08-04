@@ -89,18 +89,14 @@ class RoutineService {
 
   // Crear rutina
   static Future<Routine?> createRoutine({
-    required String day,
     required String name,
     String? description,
-    required int userId,
   }) async {
     try {
       final url = '$_baseUrl/routines';
       final body = {
-        'day': day,
         'name': name,
         'description': description,
-        'user_id': userId,
       };
 
       print('Creating routine with URL: $url');
@@ -126,12 +122,11 @@ class RoutineService {
   // Actualizar rutina
   static Future<Routine?> updateRoutine({
     required int id,
-    required String day,
     required String name,
     String? description,
   }) async {
     final url = '$_baseUrl/routines/$id';
-    final body = {'day': day, 'name': name, 'description': description};
+    final body = {'name': name, 'description': description};
     final response = await NetworkService.put(url, body: body);
 
     if (response.statusCode == 200) {
