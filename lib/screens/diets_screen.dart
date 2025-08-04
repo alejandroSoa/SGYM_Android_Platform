@@ -3,8 +3,6 @@ import '../interfaces/bussiness/diet_interface.dart';
 import '../interfaces/bussiness/food_interface.dart';
 import '../services/DietService.dart';
 import '../services/FoodService.dart';
-import '../services/UserService.dart';
-import '../services/NotificationService.dart';
 
 class DietsScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -96,50 +94,6 @@ class _DietsScreenState extends State<DietsScreen> {
         isLoadingDiets = false;
       });
       print("Error al cargar dietas: $e");
-    }
-  }
-
-  // Convertir días del inglés al español para mostrar en la UI
-  String _convertDayToSpanish(String englishDay) {
-    switch (englishDay.toLowerCase()) {
-      case 'monday':
-        return 'Lunes';
-      case 'tuesday':
-        return 'Martes';
-      case 'wednesday':
-        return 'Miércoles';
-      case 'thursday':
-        return 'Jueves';
-      case 'friday':
-        return 'Viernes';
-      case 'saturday':
-        return 'Sábado';
-      case 'sunday':
-        return 'Domingo';
-      default:
-        return englishDay;
-    }
-  }
-
-  // Convertir días del español al inglés para la API
-  String _convertDayToEnglish(String spanishDay) {
-    switch (spanishDay) {
-      case 'Lunes':
-        return 'monday';
-      case 'Martes':
-        return 'tuesday';
-      case 'Miércoles':
-        return 'wednesday';
-      case 'Jueves':
-        return 'thursday';
-      case 'Viernes':
-        return 'friday';
-      case 'Sábado':
-        return 'saturday';
-      case 'Domingo':
-        return 'sunday';
-      default:
-        return spanishDay.toLowerCase();
     }
   }
 
@@ -979,50 +933,13 @@ class _DietsScreenState extends State<DietsScreen> {
   void _showAddDietDialog() {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
-    String selectedDay = 'Lunes';
     bool isCreating = false;
-    bool isLoadingUsers = true;
-    List<Map<String, dynamic>> availableUsers = [];
-    Map<String, dynamic>? selectedUser;
-
-    final List<String> days = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo',
-    ];
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            // Cargar usuarios al abrir el diálogo
-            if (isLoadingUsers) {
-              UserService.getUsersByRole(5)
-                  .then((users) {
-                    print(
-                      'Usuarios cargados para dieta: ${users?.length ?? 0}',
-                    );
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                      if (users != null && users.isNotEmpty) {
-                        availableUsers = users;
-                        selectedUser = users.first;
-                      }
-                    });
-                  })
-                  .catchError((error) {
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                    });
-                    print('Error loading users for diet: $error');
-                  });
-            }
-
             return AlertDialog(
               title: const Text(
                 'Nueva Dieta',
@@ -1048,117 +965,6 @@ class _DietsScreenState extends State<DietsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de día
-                    const Text(
-                      'Día de la semana:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedDay,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      items: days.map((day) {
-                        return DropdownMenuItem(value: day, child: Text(day));
-                      }).toList(),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedDay = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Selector de usuario
-                    const Text(
-                      'Asignar a usuario:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (isLoadingUsers)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Cargando usuarios...'),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (availableUsers.isEmpty)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'No hay usuarios disponibles',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      )
-                    else
-                      DropdownButtonFormField<Map<String, dynamic>>(
-                        value: selectedUser,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
-                        ),
-                        items: availableUsers.map((user) {
-                          String displayText = '';
-                          if (user['name'] != null &&
-                              user['name'].toString().isNotEmpty) {
-                            displayText = user['name'];
-                            if (user['email'] != null) {
-                              displayText += ' (${user['email']})';
-                            }
-                          } else if (user['email'] != null) {
-                            displayText = user['email'];
-                          } else {
-                            displayText = 'Usuario ID: ${user['id']}';
-                          }
-
-                          return DropdownMenuItem(
-                            value: user,
-                            child: Text(
-                              displayText,
-                              style: const TextStyle(fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedUser = value;
-                          });
-                        },
-                      ),
-                    const SizedBox(height: 16),
-
                     // Campo descripción
                     TextField(
                       controller: descriptionController,
@@ -1179,8 +985,7 @@ class _DietsScreenState extends State<DietsScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed:
-                      isCreating || isLoadingUsers || selectedUser == null
+                  onPressed: isCreating
                       ? null
                       : () async {
                           if (nameController.text.trim().isEmpty) {
@@ -1202,12 +1007,10 @@ class _DietsScreenState extends State<DietsScreen> {
 
                           await _createDiet(
                             name: nameController.text.trim(),
-                            day: _convertDayToEnglish(selectedDay),
                             description:
                                 descriptionController.text.trim().isEmpty
                                 ? null
                                 : descriptionController.text.trim(),
-                            userId: selectedUser!['id'] as int,
                           );
 
                           Navigator.pop(context);
@@ -1242,51 +1045,13 @@ class _DietsScreenState extends State<DietsScreen> {
     final descriptionController = TextEditingController(
       text: diet.description ?? '',
     );
-    String selectedDay = _convertDayToSpanish(diet.day);
     bool isUpdating = false;
-    bool isLoadingUsers = true;
-    List<Map<String, dynamic>> availableUsers = [];
-    Map<String, dynamic>? selectedUser;
-
-    final List<String> days = [
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo',
-    ];
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            // Cargar usuarios al abrir el diálogo
-            if (isLoadingUsers) {
-              UserService.getUsersByRole(5)
-                  .then((users) {
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                      if (users != null && users.isNotEmpty) {
-                        availableUsers = users;
-                        // Intentar encontrar el usuario actual de la dieta
-                        selectedUser = users.firstWhere(
-                          (user) => user['id'] == diet.userId,
-                          orElse: () => users.first,
-                        );
-                      }
-                    });
-                  })
-                  .catchError((error) {
-                    setDialogState(() {
-                      isLoadingUsers = false;
-                    });
-                    print('Error loading users for diet edit: $error');
-                  });
-            }
-
             return AlertDialog(
               title: const Text(
                 'Editar Dieta',
@@ -1312,117 +1077,6 @@ class _DietsScreenState extends State<DietsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Selector de día
-                    const Text(
-                      'Día de la semana:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedDay,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      items: days.map((day) {
-                        return DropdownMenuItem(value: day, child: Text(day));
-                      }).toList(),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          selectedDay = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Selector de usuario
-                    const Text(
-                      'Asignar a usuario:',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (isLoadingUsers)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Cargando usuarios...'),
-                            ],
-                          ),
-                        ),
-                      )
-                    else if (availableUsers.isEmpty)
-                      Container(
-                        height: 60,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'No hay usuarios disponibles',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      )
-                    else
-                      DropdownButtonFormField<Map<String, dynamic>>(
-                        value: selectedUser,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person),
-                        ),
-                        items: availableUsers.map((user) {
-                          String displayText = '';
-                          if (user['name'] != null &&
-                              user['name'].toString().isNotEmpty) {
-                            displayText = user['name'];
-                            if (user['email'] != null) {
-                              displayText += ' (${user['email']})';
-                            }
-                          } else if (user['email'] != null) {
-                            displayText = user['email'];
-                          } else {
-                            displayText = 'Usuario ID: ${user['id']}';
-                          }
-
-                          return DropdownMenuItem(
-                            value: user,
-                            child: Text(
-                              displayText,
-                              style: const TextStyle(fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedUser = value;
-                          });
-                        },
-                      ),
-                    const SizedBox(height: 16),
-
                     // Campo descripción
                     TextField(
                       controller: descriptionController,
@@ -1443,8 +1097,7 @@ class _DietsScreenState extends State<DietsScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed:
-                      isUpdating || isLoadingUsers || selectedUser == null
+                  onPressed: isUpdating
                       ? null
                       : () async {
                           if (nameController.text.trim().isEmpty) {
@@ -1467,12 +1120,10 @@ class _DietsScreenState extends State<DietsScreen> {
                           await _updateDiet(
                             dietId: diet.id,
                             name: nameController.text.trim(),
-                            day: _convertDayToEnglish(selectedDay),
                             description:
                                 descriptionController.text.trim().isEmpty
                                 ? null
                                 : descriptionController.text.trim(),
-                            userId: selectedUser!['id'] as int,
                           );
 
                           Navigator.pop(context);
@@ -1530,11 +1181,16 @@ class _DietsScreenState extends State<DietsScreen> {
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Día: ${_convertDayToSpanish(diet.day)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
+                    if (diet.description != null &&
+                        diet.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        diet.description!,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1570,33 +1226,15 @@ class _DietsScreenState extends State<DietsScreen> {
     );
   }
 
-  Future<void> _createDiet({
-    required String name,
-    required String day,
-    String? description,
-    required int userId,
-  }) async {
+  Future<void> _createDiet({required String name, String? description}) async {
     try {
       final newDiet = await DietService.createDiet(
         name: name,
-        day: day,
         description: description,
-        userId: userId,
       );
 
       if (newDiet != null) {
         await _loadDiets();
-
-        // Enviar notificación al usuario
-        try {
-          await NotificationService.sendDietAssignedNotification(
-            userId: userId,
-          );
-          print('Notificación de dieta enviada al usuario $userId');
-        } catch (notificationError) {
-          print('Error al enviar notificación: $notificationError');
-          // No mostrar error al usuario, solo loggearlo
-        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1661,17 +1299,13 @@ class _DietsScreenState extends State<DietsScreen> {
   Future<void> _updateDiet({
     required int dietId,
     required String name,
-    required String day,
     String? description,
-    required int userId,
   }) async {
     try {
       final updatedDiet = await DietService.updateDiet(
         id: dietId,
         name: name,
-        day: day,
         description: description,
-        userId: userId,
       );
 
       if (updatedDiet != null) {
@@ -2038,17 +1672,16 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
     try {
       final success = await DietService.removeFoodFromDiet(
         dietId: widget.diet.id,
-        dietFoodId: dietFood['id'],
+        dietFoodId: dietFood['id'], // This is the pivot table ID
       );
 
       if (success) {
         await _loadDietFoods();
         if (mounted) {
+          final food = dietFood['food']; // Access the nested food object
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Alimento "${dietFood['name']}" eliminado de la dieta',
-              ),
+              content: Text('Alimento "${food['name']}" eliminado de la dieta'),
               backgroundColor: Colors.grey[600],
               behavior: SnackBarBehavior.floating,
             ),
@@ -2081,7 +1714,7 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
   void _showAddFoodDialog() {
     // Filtrar alimentos que no están en la dieta
     final availableFoods = allFoods.where((food) {
-      return !dietFoods.any((dietFood) => dietFood['food_id'] == food.id);
+      return !dietFoods.any((dietFood) => dietFood['food']['id'] == food.id);
     }).toList();
 
     if (availableFoods.isEmpty) {
@@ -2249,6 +1882,7 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
               itemCount: dietFoods.length,
               itemBuilder: (context, index) {
                 final dietFood = dietFoods[index];
+                final food = dietFood['food']; // Access the nested food object
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -2262,14 +1896,14 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
                       vertical: 8,
                     ),
                     title: Text(
-                      dietFood['name'] ?? 'Alimento desconocido',
+                      food['name'] ?? 'Alimento desconocido',
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                     ),
                     subtitle: Text(
-                      '${dietFood['grams'] ?? 0}g - ${dietFood['calories'] ?? 0} cal',
+                      '${food['grams'] ?? 0}g - ${food['calories'] ?? 0} cal',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     trailing: IconButton(
@@ -2288,13 +1922,14 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
   }
 
   void _showRemoveFoodConfirmation(Map<String, dynamic> dietFood) {
+    final food = dietFood['food']; // Access the nested food object
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Confirmar eliminación'),
           content: Text(
-            '¿Estás seguro de que quieres eliminar "${dietFood['name']}" de esta dieta?',
+            '¿Estás seguro de que quieres eliminar "${food['name']}" de esta dieta?',
           ),
           actions: [
             TextButton(

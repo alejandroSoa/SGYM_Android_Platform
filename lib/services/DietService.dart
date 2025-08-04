@@ -45,18 +45,11 @@ class DietService {
 
   // Crear dieta
   static Future<Map<String, dynamic>?> createDiet({
-    required String day,
     required String name,
     String? description,
-    required int userId,
   }) async {
     final fullUrl = '$_baseUrl/diets';
-    final body = {
-      'day': day,
-      'name': name,
-      'description': description,
-      'user_id': userId,
-    };
+    final body = {'name': name, 'description': description};
     final response = await NetworkService.post(fullUrl, body: body);
     if (response.statusCode == 201) {
       final data = json.decode(response.body)['data'];
@@ -68,18 +61,11 @@ class DietService {
   // Actualizar dieta
   static Future<Map<String, dynamic>?> updateDiet({
     required int id,
-    required String day,
     required String name,
     String? description,
-    required int userId,
   }) async {
     final fullUrl = '$_baseUrl/diets/$id';
-    final body = {
-      'day': day,
-      'name': name,
-      'description': description,
-      'user_id': userId,
-    };
+    final body = {'name': name, 'description': description};
     final response = await NetworkService.put(fullUrl, body: body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'];

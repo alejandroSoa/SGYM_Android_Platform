@@ -1138,6 +1138,28 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
+  // Método auxiliar para normalizar fechas y manejar diferentes formatos
+  String _normalizeDate(String dateString) {
+    try {
+      // Si la fecha ya está en formato YYYY-MM-DD, devolverla tal como está
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
+        return dateString;
+      }
+
+      // Si la fecha está en formato ISO (2025-08-04T00:00:00.000Z), extraer solo la parte de la fecha
+      if (dateString.contains('T')) {
+        return dateString.split('T')[0];
+      }
+
+      // Si no coincide con ningún formato conocido, intentar parsear como DateTime
+      final parsedDate = DateTime.parse(dateString);
+      return '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      print('Error normalizando fecha $dateString: $e');
+      return dateString; // Devolver la fecha original si hay error
+    }
+  }
+
   // Método para verificar si la fecha seleccionada es hoy
   bool _isToday() {
     final today = DateTime.now();
@@ -1148,19 +1170,37 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   // Método para filtrar las citas del día seleccionado
   List<dynamic> _getSelectedDayAppointments() {
-    return appointments.where((appointment) {
+    print('=== DEBUG FILTERING APPOINTMENTS ===');
+    print('Selected date: $selectedDate');
+    print('Total appointments: ${appointments.length}');
+
+    final filtered = appointments.where((appointment) {
       String appointmentDate = '';
 
       if (appointment is TrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'TrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       } else if (appointment is NutritionistAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'NutritionistAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       } else if (appointment is UserTrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'UserTrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       }
 
-      return appointmentDate == selectedDate;
+      final matches = appointmentDate == selectedDate;
+      print('Date match: $appointmentDate == $selectedDate = $matches');
+      return matches;
     }).toList();
+
+    print('Filtered appointments count: ${filtered.length}');
+    return filtered;
   }
 
   // Método para filtrar las citas de hoy (mantenido para compatibilidad)
@@ -1173,11 +1213,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       String appointmentDate = '';
 
       if (appointment is TrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
       } else if (appointment is NutritionistAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
       } else if (appointment is UserTrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
       }
 
       return appointmentDate == todayString;
@@ -1248,19 +1288,60 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
 
   List<dynamic> _getAppointmentsForSelectedDay() {
     final selectedDateString = _getSelectedDateString();
-    return widget.appointments.where((appointment) {
+    print('=== DEBUG CALENDAR FILTERING ===');
+    print('Calendar selected date: $selectedDateString');
+
+    final filtered = widget.appointments.where((appointment) {
       String appointmentDate = '';
 
       if (appointment is TrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'Calendar TrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       } else if (appointment is NutritionistAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'Calendar NutritionistAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       } else if (appointment is UserTrainerAppointment) {
-        appointmentDate = appointment.date;
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'Calendar UserTrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       }
 
-      return appointmentDate == selectedDateString;
+      final matches = appointmentDate == selectedDateString;
+      print(
+        'Calendar date match: $appointmentDate == $selectedDateString = $matches',
+      );
+      return matches;
     }).toList();
+
+    print('Calendar filtered appointments count: ${filtered.length}');
+    return filtered;
+  }
+
+  // Método auxiliar para normalizar fechas (copiado del componente padre)
+  String _normalizeDate(String dateString) {
+    try {
+      // Si la fecha ya está en formato YYYY-MM-DD, devolverla tal como está
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
+        return dateString;
+      }
+
+      // Si la fecha está en formato ISO (2025-08-04T00:00:00.000Z), extraer solo la parte de la fecha
+      if (dateString.contains('T')) {
+        return dateString.split('T')[0];
+      }
+
+      // Si no coincide con ningún formato conocido, intentar parsear como DateTime
+      final parsedDate = DateTime.parse(dateString);
+      return '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+    } catch (e) {
+      print('Error normalizando fecha $dateString: $e');
+      return dateString; // Devolver la fecha original si hay error
+    }
   }
 
   void _onDaySelected(int index) {
