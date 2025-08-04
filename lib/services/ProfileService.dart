@@ -25,6 +25,23 @@ class ProfileService {
     }
   }
 
+  // Nuevo método para obtener el perfil de un usuario específico por ID
+  static Future<Profile?> fetchProfileById(int userId) async {
+    final baseUrl = dotenv.env['BUSINESS_BASE_URL'];
+    final fullUrl = '$baseUrl/users/$userId/profile';
+
+    final response = await NetworkService.get(fullUrl);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final profile = Profile.fromJson(data['data']);
+
+      return profile;
+    } else {
+      return null;
+    }
+  }
+
   static Future<Profile?> updateProfile(
     Profile currentProfile, {
     String? fullName,

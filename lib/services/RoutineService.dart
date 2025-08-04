@@ -38,20 +38,20 @@ class RoutineService {
 
       final userId = user['id'];
       print('Usuario actual ID: $userId (tipo: ${userId.runtimeType})');
-      
+
       final url = '$_baseUrl/routines';
       print('URL de consulta: $url');
       final response = await NetworkService.get(url);
-      
+
       print('Status code de respuesta: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         print('Respuesta completa de la API: $responseData');
-        
+
         final data = responseData['data'] as List;
         print('Total de rutinas en la API: ${data.length}');
-        
+
         // Mostrar cada rutina completa
         for (int i = 0; i < data.length; i++) {
           print('Rutina $i: ${data[i]}');
@@ -61,23 +61,31 @@ class RoutineService {
         final userRoutines = data
             .where((routine) {
               final routineUserId = routine['userId'];
-              print('Comparando: rutina userId=$routineUserId (tipo: ${routineUserId.runtimeType}) con usuario=$userId (tipo: ${userId.runtimeType})');
+              print(
+                'Comparando: rutina userId=$routineUserId (tipo: ${routineUserId.runtimeType}) con usuario=$userId (tipo: ${userId.runtimeType})',
+              );
               return routine['userId'] == userId;
             })
             .map((e) => Routine.fromJson(e))
             .toList();
 
         // Mostrar resultados del filtrado
-        print('FILTRADO: Se encontraron ${userRoutines.length} rutinas para el usuario $userId');
+        print(
+          'FILTRADO: Se encontraron ${userRoutines.length} rutinas para el usuario $userId',
+        );
         for (int i = 0; i < userRoutines.length; i++) {
-          print('Rutina filtrada $i: ${userRoutines[i].name} (ID: ${userRoutines[i].id})');
+          print(
+            'Rutina filtrada $i: ${userRoutines[i].name} (ID: ${userRoutines[i].id})',
+          );
         }
 
         // Ordenar por ID (más recientes primero) y tomar las últimas 5
         userRoutines.sort((a, b) => b.id.compareTo(a.id));
         final recentRoutines = userRoutines.take(5).toList();
 
-        print('FINAL: Devolviendo ${recentRoutines.length} rutinas recientes para el usuario $userId');
+        print(
+          'FINAL: Devolviendo ${recentRoutines.length} rutinas recientes para el usuario $userId',
+        );
         return recentRoutines;
       }
       return [];
@@ -94,10 +102,7 @@ class RoutineService {
   }) async {
     try {
       final url = '$_baseUrl/routines';
-      final body = {
-        'name': name,
-        'description': description,
-      };
+      final body = {'name': name, 'description': description};
 
       print('Creating routine with URL: $url');
       print('Body: $body');

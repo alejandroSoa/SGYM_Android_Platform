@@ -89,28 +89,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     }
   }
 
-  Map<String, List<Routine>> _organizeRoutinesByDay() {
-    Map<String, List<Routine>> organizedRoutines = {
-      'Lunes': [],
-      'Martes': [],
-      'Miércoles': [],
-      'Jueves': [],
-      'Viernes': [],
-      'Sábado': [],
-      'Domingo': [],
-    };
-
-    for (final routine in realRoutines) {
-      // Convertir el día de inglés a español para la organización
-      final spanishDay = _convertDayToSpanish(routine.day);
-      if (organizedRoutines.containsKey(spanishDay)) {
-        organizedRoutines[spanishDay]!.add(routine);
-      }
-    }
-
-    return organizedRoutines;
-  }
-
   Widget _buildRoutinesSection() {
     if (isLoadingRoutines) {
       return const Center(
@@ -685,7 +663,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final videoUrlController = TextEditingController();
-    EquipmentType selectedEquipmentType = EquipmentType.other;
+    EquipmentType selectedEquipmentType = EquipmentType.dumbbell;
 
     showDialog(
       context: context,
@@ -1032,28 +1010,6 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    }
-  }
-
-  // Convertir días del inglés al español para mostrar en la UI
-  String _convertDayToSpanish(String englishDay) {
-    switch (englishDay.toLowerCase()) {
-      case 'monday':
-        return 'Lunes';
-      case 'tuesday':
-        return 'Martes';
-      case 'wednesday':
-        return 'Miércoles';
-      case 'thursday':
-        return 'Jueves';
-      case 'friday':
-        return 'Viernes';
-      case 'saturday':
-        return 'Sábado';
-      case 'sunday':
-        return 'Domingo';
-      default:
-        return englishDay;
     }
   }
 
@@ -1744,7 +1700,7 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
 
     // Filtrar ejercicios que ya están en la rutina
     final assignedExerciseIds = routineExercises
-        .map((re) => re['exercise_id'] as int?)
+        .map((re) => re['exerciseId'] as int?)
         .where((id) => id != null)
         .cast<int>()
         .toList();
@@ -1894,6 +1850,7 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
                   itemCount: routineExercises.length,
                   itemBuilder: (context, index) {
                     final routineExercise = routineExercises[index];
+                    final exercise = routineExercise['exercise'] as Map<String, dynamic>?;
 
                     // Mostrar datos directos del API
                     print('🎯 Mostrando ejercicio $index: $routineExercise');
@@ -1906,11 +1863,11 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
                           color: Color(0xFF6366F1),
                         ),
                         title: Text(
-                          routineExercise['name'] ?? 'Sin nombre',
+                          exercise?['name'] ?? 'Sin nombre',
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
-                          routineExercise['description'] ?? 'Sin descripción',
+                          exercise?['description'] ?? 'Sin descripción',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1933,7 +1890,8 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
   }
 
   void _showRemoveExerciseConfirmation(Map<String, dynamic> routineExercise) {
-    final exerciseName = routineExercise['name'] ?? 'Ejercicio';
+    final exercise = routineExercise['exercise'] as Map<String, dynamic>?;
+    final exerciseName = exercise?['name'] ?? 'Ejercicio';
 
     showDialog(
       context: context,

@@ -18,22 +18,22 @@ class TrainerAppointment {
   factory TrainerAppointment.fromJson(Map<String, dynamic> json) {
     return TrainerAppointment(
       id: json['id'] as int,
-      userId: json['user_id'] as int,
-      trainerId: json['trainer_id'] as int,
+      userId: json['userId'] as int,
+      trainerId: json['trainerId'] as int,
       date: json['date'] as String,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String,
+      startTime: json['startTime'] as String,
+      endTime: json['endTime'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'trainer_id': trainerId,
+      'userId': userId,
+      'trainerId': trainerId,
       'date': date,
-      'start_time': startTime,
-      'end_time': endTime,
+      'startTime': startTime,
+      'endTime': endTime,
     };
   }
 }
@@ -58,22 +58,22 @@ class NutritionistAppointment {
   factory NutritionistAppointment.fromJson(Map<String, dynamic> json) {
     return NutritionistAppointment(
       id: json['id'] as int,
-      userId: json['user_id'] as int,
-      nutritionistId: json['nutritionist_id'] as int,
+      userId: json['userId'] as int,
+      nutritionistId: json['nutritionistId'] as int,
       date: json['date'] as String,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String,
+      startTime: json['startTime'] as String,
+      endTime: json['endTime'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'nutritionist_id': nutritionistId,
+      'userId': userId,
+      'nutritionistId': nutritionistId,
       'date': date,
-      'start_time': startTime,
-      'end_time': endTime,
+      'startTime': startTime,
+      'endTime': endTime,
     };
   }
 }
@@ -97,20 +97,20 @@ class UserTrainerAppointment {
   factory UserTrainerAppointment.fromJson(Map<String, dynamic> json) {
     return UserTrainerAppointment(
       id: json['id'] as int,
-      trainerId: json['trainer_id'] as int,
+      trainerId: json['trainerId'] as int,
       date: json['date'] as String,
-      startTime: json['start_time'] as String,
-      endTime: json['end_time'] as String,
+      startTime: json['startTime'] as String,
+      endTime: json['endTime'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'trainer_id': trainerId,
+      'trainerId': trainerId,
       'date': date,
-      'start_time': startTime,
-      'end_time': endTime,
+      'startTime': startTime,
+      'endTime': endTime,
     };
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/AppointmentService.dart';
 import '../services/UserService.dart';
+import '../services/ProfileService.dart';
 import '../interfaces/bussiness/appointment_interface.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -931,29 +932,29 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   Widget _AppointmentCard({required dynamic appointment}) {
     String title = '';
-    String subtitle = '';
     String time = '';
     IconData icon = Icons.event;
     Color iconColor = Colors.blue;
+    int? userId;
 
     // Determinar el contenido basado en el tipo de cita
     if (appointment is TrainerAppointment) {
       title = 'Sesión de Entrenamiento';
-      subtitle = 'Cliente ID: ${appointment.userId}';
+      userId = appointment.userId;
       time =
           '${appointment.date} - ${appointment.startTime} a ${appointment.endTime}';
       icon = Icons.fitness_center;
       iconColor = Colors.orange;
     } else if (appointment is NutritionistAppointment) {
       title = 'Consulta Nutricional';
-      subtitle = 'Cliente ID: ${appointment.userId}';
+      userId = appointment.userId;
       time =
           '${appointment.date} - ${appointment.startTime} a ${appointment.endTime}';
       icon = Icons.restaurant;
       iconColor = Colors.green;
     } else if (appointment is UserTrainerAppointment) {
       title = 'Sesión con Entrenador';
-      subtitle = 'Entrenador ID: ${appointment.trainerId}';
+      userId = appointment.trainerId; // En este caso obtenemos el entrenador
       time =
           '${appointment.date} - ${appointment.startTime} a ${appointment.endTime}';
       icon = Icons.person;
@@ -961,7 +962,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } else {
       // Fallback para tipo dinámico
       title = 'Cita';
-      subtitle = 'Ver detalles';
       time = 'Sin fecha';
     }
 
@@ -1003,10 +1003,40 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.black54, fontSize: 14),
-                ),
+                // Usar FutureBuilder para obtener el nombre del usuario
+                if (userId != null)
+                  FutureBuilder<String>(
+                    future: _getUserName(userId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Text(
+                          'Cargando...',
+                          style: TextStyle(color: Colors.black54, fontSize: 14),
+                        );
+                      } else if (snapshot.hasError) {
+                        return Text(
+                          appointment is UserTrainerAppointment 
+                              ? 'Entrenador ID: $userId'
+                              : 'Cliente ID: $userId',
+                          style: const TextStyle(color: Colors.black54, fontSize: 14),
+                        );
+                      } else {
+                        final userName = snapshot.data ?? '';
+                        final prefix = appointment is UserTrainerAppointment 
+                            ? 'Entrenador: '
+                            : 'Cliente: ';
+                        return Text(
+                          '$prefix$userName',
+                          style: const TextStyle(color: Colors.black54, fontSize: 14),
+                        );
+                      }
+                    },
+                  )
+                else
+                  const Text(
+                    'Ver detalles',
+                    style: TextStyle(color: Colors.black54, fontSize: 14),
+                  ),
                 const SizedBox(height: 4),
                 Text(
                   time,
@@ -1033,6 +1063,17 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         ],
       ),
     );
+  }
+
+  // Método auxiliar para obtener el nombre del usuario
+  Future<String> _getUserName(int userId) async {
+    try {
+      final profile = await ProfileService.fetchProfileById(userId);
+      return profile?.fullName ?? 'Usuario $userId';
+    } catch (e) {
+      print('Error obteniendo nombre del usuario $userId: $e');
+      return 'Usuario $userId';
+    }
   }
 }
 

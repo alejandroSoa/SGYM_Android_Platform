@@ -39,8 +39,8 @@ class Exercise {
     switch (type?.toLowerCase()) {
       case 'machine':
         return EquipmentType.machine;
-      case 'bodyweight':
-        return EquipmentType.bodyweight;
+      case 'dumbbell':
+        return EquipmentType.dumbbell;
       case 'other':
         return EquipmentType.other;
       default:
@@ -51,7 +51,7 @@ class Exercise {
 
 enum EquipmentType {
   machine('machine'),
-  bodyweight('bodyweight'),
+  dumbbell('dumbbell'),
   other('other');
 
   const EquipmentType(this.value);
@@ -61,8 +61,8 @@ enum EquipmentType {
     switch (this) {
       case EquipmentType.machine:
         return 'Máquina';
-      case EquipmentType.bodyweight:
-        return 'Peso corporal';
+      case EquipmentType.dumbbell:
+        return 'Mancuernas';
       case EquipmentType.other:
         return 'Otro';
     }
