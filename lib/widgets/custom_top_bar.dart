@@ -10,6 +10,7 @@ class CustomTopBar extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final bool showNotificationIcon;
   final VoidCallback? onNotificationsTap;
+  final int unreadNotificationCount;
 
   const CustomTopBar({
     super.key,
@@ -22,6 +23,7 @@ class CustomTopBar extends StatelessWidget {
     this.onBack,
     this.onProfileTap,
     this.onNotificationsTap,
+    this.unreadNotificationCount = 0,
   });
 
   @override
@@ -92,14 +94,45 @@ class CustomTopBar extends StatelessWidget {
               if (showNotificationIcon)
                 GestureDetector(
                   onTap: onNotificationsTap,
-                  child: Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F2FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.notifications_none, size: 20),
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF2F2FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.notifications_none, size: 20),
+                      ),
+                      if (unreadNotificationCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              unreadNotificationCount > 99 
+                                  ? '99+' 
+                                  : unreadNotificationCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               if (showNotificationIcon && showProfileIcon)

@@ -13,6 +13,7 @@ class RoleConfigService {
   static List<Screenconfig> getScreensForRole(
     int roleId, {
     VoidCallback? onBack,
+    VoidCallback? onNotificationChanged,
   }) {
     switch (roleId) {
       case 3: // Trainer - SIN DIETAS
@@ -31,7 +32,7 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: const NotificationsScreen(),
+            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,
@@ -59,7 +60,7 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: const NotificationsScreen(),
+            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,
@@ -80,7 +81,7 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: const NotificationsScreen(),
+            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,

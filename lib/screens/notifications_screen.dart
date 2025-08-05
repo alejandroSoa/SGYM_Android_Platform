@@ -3,7 +3,9 @@ import '../interfaces/notification_interface.dart';
 import '../services/LocalNotificationService.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  final VoidCallback? onNotificationChanged;
+
+  const NotificationsScreen({super.key, this.onNotificationChanged});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -25,7 +27,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     try {
-      final loadedNotifications = await LocalNotificationService.getNotifications();
+      final loadedNotifications =
+          await LocalNotificationService.getNotifications();
       setState(() {
         notifications = loadedNotifications;
         isLoading = false;
@@ -41,12 +44,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _markAsRead(String notificationId) async {
     await LocalNotificationService.markAsRead(notificationId);
     _loadNotifications(); // Recargar para actualizar UI
+
+    // Notificar al padre que cambió el estado de las notificaciones
+    if (widget.onNotificationChanged != null) {
+      widget.onNotificationChanged!();
+    }
   }
 
   Future<void> _markAllAsRead() async {
     await LocalNotificationService.markAllAsRead();
     _loadNotifications(); // Recargar para actualizar UI
-    
+
+    // Notificar al padre que cambió el estado de las notificaciones
+    if (widget.onNotificationChanged != null) {
+      widget.onNotificationChanged!();
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Todas las notificaciones marcadas como leídas'),
@@ -58,6 +71,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _deleteNotification(String notificationId) async {
     await LocalNotificationService.deleteNotification(notificationId);
     _loadNotifications(); // Recargar para actualizar UI
+
+    // Notificar al padre que cambió el estado de las notificaciones
+    if (widget.onNotificationChanged != null) {
+      widget.onNotificationChanged!();
+    }
   }
 
   Future<void> _clearAllNotifications() async {
@@ -88,7 +106,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (shouldClear == true) {
       await LocalNotificationService.clearAllNotifications();
       _loadNotifications(); // Recargar para actualizar UI
-      
+
+      // Notificar al padre que cambió el estado de las notificaciones
+      if (widget.onNotificationChanged != null) {
+        widget.onNotificationChanged!();
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -170,24 +193,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             )
           : notifications.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadNotifications,
-                  color: const Color(0xFF6366F1),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: notifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = notifications[index];
-                      return _NotificationCard(
-                        notification: notification,
-                        onTap: () => _markAsRead(notification.id),
-                        onDelete: () => _deleteNotification(notification.id),
-                        timeAgo: _formatDateTime(notification.timestamp),
-                      );
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
+              color: const Color(0xFF6366F1),
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = notifications[index];
+                  return _NotificationCard(
+                    notification: notification,
+                    onTap: () => _markAsRead(notification.id),
+                    onDelete: () => _deleteNotification(notification.id),
+                    timeAgo: _formatDateTime(notification.timestamp),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -196,11 +219,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_none,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.notifications_none, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No tienes notificaciones',
@@ -212,29 +231,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Las notificaciones push aparecerán aquí',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            'Todo tranquilo por aquí',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
           const SizedBox(height: 24),
-          // Botón para agregar notificación de prueba
-          ElevatedButton(
-            onPressed: () async {
-              await LocalNotificationService.saveNotification(
-                title: 'Notificación de prueba',
-                body: 'Esta es una notificación de ejemplo para probar el sistema',
-                data: 'test_data',
-              );
-              _loadNotifications();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Agregar notificación de prueba'),
-          ),
         ],
       ),
     );
@@ -262,7 +262,9 @@ class _NotificationCard extends StatelessWidget {
         color: notification.isRead ? Colors.white : const Color(0xFFF0F0FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notification.isRead ? Colors.grey[300]! : const Color(0xFF6366F1).withOpacity(0.3),
+          color: notification.isRead
+              ? Colors.grey[300]!
+              : const Color(0xFF6366F1).withOpacity(0.3),
           width: notification.isRead ? 1 : 2,
         ),
         boxShadow: [
@@ -283,11 +285,7 @@ class _NotificationCard extends StatelessWidget {
           ),
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: const Icon(Icons.delete, color: Colors.white, size: 24),
         ),
         onDismissed: (direction) {
           onDelete();
@@ -306,13 +304,13 @@ class _NotificationCard extends StatelessWidget {
                   height: 12,
                   margin: const EdgeInsets.only(top: 4, right: 12),
                   decoration: BoxDecoration(
-                    color: notification.isRead 
-                        ? Colors.transparent 
+                    color: notification.isRead
+                        ? Colors.transparent
                         : const Color(0xFF6366F1),
                     shape: BoxShape.circle,
                   ),
                 ),
-                
+
                 // Ícono de notificación
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -326,9 +324,9 @@ class _NotificationCard extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                
+
                 const SizedBox(width: 12),
-                
+
                 // Contenido de la notificación
                 Expanded(
                   child: Column(
@@ -338,8 +336,8 @@ class _NotificationCard extends StatelessWidget {
                         notification.title,
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: notification.isRead 
-                              ? FontWeight.w500 
+                          fontWeight: notification.isRead
+                              ? FontWeight.w500
                               : FontWeight.w600,
                           color: Colors.black87,
                         ),
@@ -358,10 +356,7 @@ class _NotificationCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         timeAgo,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       ),
                     ],
                   ),

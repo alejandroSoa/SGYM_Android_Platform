@@ -20,6 +20,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/NotificationService.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'services/FirebaseMessagingService.dart';
+import 'services/LocalNotificationService.dart';
 
 // Handler para notificaciones en background
 @pragma('vm:entry-point')
@@ -101,24 +102,45 @@ class MainLayout extends StatefulWidget {
 
 // ...existing code...
 
-class _MainLayoutState extends State<MainLayout> {
+class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
   int currentIndex = 0;
   List<Screenconfig> viewConfigs = [];
   List<Map<String, dynamic>> navItems = [];
   bool isLoading = true;
   String userProfileImage = 'assets/profile.png';
   String username = 'Usuario';
+  int unreadNotificationCount = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadAllData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Actualizar contador cuando la app vuelve al primer plano
+    if (state == AppLifecycleState.resumed) {
+      _refreshNotificationCount();
+    }
   }
 
   Future<void> _loadAllData() async {
     try {
-      // Cargar datos de configuración y usuario en paralelo
-      await Future.wait([_loadRoleBasedConfig(), _loadUserData()]);
+      // Cargar datos de configuración, usuario y notificaciones en paralelo
+      await Future.wait([
+        _loadRoleBasedConfig(), 
+        _loadUserData(),
+        _loadNotificationCount(),
+      ]);
     } catch (e) {
       print("[MAIN_LAYOUT] Error loading data: $e");
     } finally {
@@ -140,12 +162,14 @@ class _MainLayoutState extends State<MainLayout> {
         viewConfigs = RoleConfigService.getScreensForRole(
           userRole,
           onBack: () => setState(() => currentIndex = 0),
+          onNotificationChanged: _refreshNotificationCount,
         );
         navItems = RoleConfigService.getNavItemsForRole(userRole);
       } else {
         viewConfigs = RoleConfigService.getScreensForRole(
           0,
           onBack: () => setState(() => currentIndex = 0),
+          onNotificationChanged: _refreshNotificationCount,
         );
         navItems = RoleConfigService.getNavItemsForRole(0);
       }
@@ -158,6 +182,7 @@ class _MainLayoutState extends State<MainLayout> {
       viewConfigs = RoleConfigService.getScreensForRole(
         0,
         onBack: () => setState(() => currentIndex = 0),
+        onNotificationChanged: _refreshNotificationCount,
       );
       navItems = RoleConfigService.getNavItemsForRole(0);
     }
@@ -181,6 +206,26 @@ class _MainLayoutState extends State<MainLayout> {
       // Mantener valores por defecto en caso de error
       userProfileImage = 'assets/profile.png';
       username = 'Usuario';
+    }
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final count = await LocalNotificationService.getUnreadCount();
+      unreadNotificationCount = count;
+      print("[MAIN_LAYOUT] Unread notifications: $count");
+    } catch (e) {
+      print("[MAIN_LAYOUT] Error loading notification count: $e");
+      unreadNotificationCount = 0;
+    }
+  }
+
+  Future<void> _refreshNotificationCount() async {
+    final count = await LocalNotificationService.getUnreadCount();
+    if (mounted) {
+      setState(() {
+        unreadNotificationCount = count;
+      });
     }
   }
 
@@ -212,11 +257,18 @@ class _MainLayoutState extends State<MainLayout> {
                 showBackButton: config.showBackButton,
                 showProfileIcon: config.showProfileIcon,
                 showNotificationIcon: config.showNotificationIcon,
+                unreadNotificationCount: unreadNotificationCount,
                 onBack: () => setState(() => currentIndex = 0),
                 onProfileTap: () =>
                     setState(() => currentIndex = viewConfigs.length - 2),
-                onNotificationsTap: () =>
-                    setState(() => currentIndex = viewConfigs.length - 1),
+                onNotificationsTap: () {
+                  setState(() => currentIndex = viewConfigs.length - 1);
+                  
+                  // Actualizar contador después de navegar a notificaciones
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    _refreshNotificationCount();
+                  });
+                },
               ),
             ],
             // Contenido principal
@@ -260,7 +312,11 @@ class _MainLayoutState extends State<MainLayout> {
     double unselectedWidth = screenWidth * 0.16;
 
     return GestureDetector(
-      onTap: () => setState(() => currentIndex = index),
+      onTap: () {
+        setState(() => currentIndex = index);
+        // Actualizar contador de notificaciones cuando cambie de pestaña
+        _refreshNotificationCount();
+      },
       child: Container(
         height: 65,
         width: isSelected ? selectedWidth : unselectedWidth,
