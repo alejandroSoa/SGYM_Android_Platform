@@ -696,11 +696,16 @@ class _UserRoutineExercisesViewerState
                     ),
                   ),
                 ],
-                if (exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty) ...[
+                if (exercise['videoUrl'] != null &&
+                    exercise['videoUrl'].toString().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.play_circle_fill, color: Colors.red[600], size: 16),
+                      Icon(
+                        Icons.play_circle_fill,
+                        color: Colors.red[600],
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         'Ver video demostrativo',
@@ -715,10 +720,14 @@ class _UserRoutineExercisesViewerState
                 ],
               ],
             ),
-            trailing: exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty
+            trailing:
+                exercise['videoUrl'] != null &&
+                    exercise['videoUrl'].toString().isNotEmpty
                 ? Icon(Icons.play_arrow, color: Colors.red[600])
                 : null,
-            onTap: exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty
+            onTap:
+                exercise['videoUrl'] != null &&
+                    exercise['videoUrl'].toString().isNotEmpty
                 ? () => _openYouTubeVideo(exercise['videoUrl'])
                 : null,
           ),

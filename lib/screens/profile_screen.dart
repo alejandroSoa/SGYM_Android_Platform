@@ -1214,7 +1214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // Botón de Cerrar Sesión
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -1231,11 +1231,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
                                         child: const Text('Cancelar'),
                                       ),
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
                                         child: const Text('Cerrar Sesión'),
                                       ),
                                     ],
@@ -1245,21 +1247,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                               if (shouldLogout == true) {
                                 // Borrar datos del usuario
-                                final prefs = await SharedPreferences.getInstance();
+                                final prefs =
+                                    await SharedPreferences.getInstance();
                                 await prefs.remove('first-init-app');
 
                                 // Mostrar mensaje de éxito
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Sesión cerrada exitosamente'),
+                                      content: Text(
+                                        'Sesión cerrada exitosamente',
+                                      ),
                                       backgroundColor: Colors.green,
                                       duration: Duration(seconds: 1),
                                     ),
                                   );
 
                                   // Esperar un momento y reiniciar la aplicación
-                                  await Future.delayed(const Duration(seconds: 1));
+                                  await Future.delayed(
+                                    const Duration(seconds: 1),
+                                  );
 
                                   if (context.mounted) {
                                     // Reiniciar la aplicación navegando al FirstTimeScreen
@@ -1292,7 +1299,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 150),
                       ],
                     ),
