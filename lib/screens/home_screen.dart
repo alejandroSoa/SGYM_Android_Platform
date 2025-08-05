@@ -5,9 +5,11 @@ import '../services/RoutineService.dart';
 import '../services/DietService.dart';
 import '../services/AppointmentService.dart';
 import '../services/GymStatusService.dart';
+import '../services/SharedPreferencesService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../interfaces/bussiness/appointment_interface.dart';
 import '../main.dart';
+import 'first_time_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +37,65 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserDiets();
     _loadUserAppointments();
     _loadGymOccupancy();
+  }
+
+  Future<void> _logout() async {
+    try {
+      // Mostrar diálogo de confirmación
+      final shouldLogout = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Cerrar Sesión'),
+            content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Cerrar Sesión'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldLogout == true) {
+        // Limpiar datos de sesión
+        await SharedPreferencesService.clearToken();
+        await SharedPreferencesService.clearRefreshToken();
+        
+        // Navegar a FirstTimeScreen y limpiar el stack de navegación
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => FirstTimeScreen(
+                onComplete: () {
+                  // Esta función se ejecutará cuando el usuario complete el onboarding nuevamente
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const MainLayout()),
+                  );
+                },
+              ),
+            ),
+            (Route<dynamic> route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error durante logout: $e');
+      // Mostrar mensaje de error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al cerrar sesión. Intenta nuevamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadUserRoutines() async {
@@ -313,159 +374,175 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 12),
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.asset(
-                  'assets/gym.png',
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 16,
-                left: 16,
-                child: Text(
-                  'Resumen Diario',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+    return Scaffold(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'assets/gym.png',
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ),
-              Positioned(
-                top: 16,
-                right: 16,
-                child: CircleAvatar(backgroundColor: Colors.white, radius: 12),
-              ),
-              Positioned(
-                bottom: 16,
-                left: 16,
-                right: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Text(
+                    'Resumen Diario',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.people, color: Colors.white, size: 16),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          gymOccupancyText,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                ),
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: GestureDetector(
+                    onTap: _logout,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          DayAdvice(
-            color: Color.fromARGB(255, 122, 90, 249),
-            frase: 'Si la vida te da limones, haz limonada 4K',
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () {
-              final mainLayoutState = context
-                  .findAncestorStateOfType<State<MainLayout>>();
-              if (mainLayoutState != null) {
-                (mainLayoutState as dynamic).setState(() {
-                  (mainLayoutState as dynamic).currentIndex = 4;
-                });
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xFFF2F2FF),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: const [
-                  Icon(
-                    Icons.qr_code_2_rounded,
-                    size: 36,
-                    color: Color(0xFF7A5AF9),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Acceso rápido: QR para entrar al gimnasio',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF413477),
+                      child: Icon(
+                        Icons.logout,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),
-                ],
+                ),
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.people, color: Colors.white, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            gymOccupancyText,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            DayAdvice(
+              color: Color.fromARGB(255, 122, 90, 249),
+              frase: 'Si la vida te da limones, haz limonada 4K',
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () {
+                final mainLayoutState = context
+                    .findAncestorStateOfType<State<MainLayout>>();
+                if (mainLayoutState != null) {
+                  (mainLayoutState as dynamic).setState(() {
+                    (mainLayoutState as dynamic).currentIndex = 4;
+                  });
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF2F2FF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.qr_code_2_rounded,
+                      size: 36,
+                      color: Color(0xFF7A5AF9),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Acceso rápido: QR para entrar al gimnasio',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF413477),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          DailyActivity(
-            ejercicios: _getRoutineNames(),
-            totalEjercicios: userRoutines.length,
-            dietaPrincipal: todayDietName,
-            citaPrincipal: todayAppointmentText,
-            onRutinaTap: () {
-              final mainLayoutState = context
-                  .findAncestorStateOfType<State<MainLayout>>();
-              if (mainLayoutState != null) {
-                (mainLayoutState as dynamic).setState(() {
-                  (mainLayoutState as dynamic).currentIndex =
-                      3; // Pestaña de Rutinas
-                });
-              }
-            },
-            onDietaTap: () {
-              final mainLayoutState = context
-                  .findAncestorStateOfType<State<MainLayout>>();
-              if (mainLayoutState != null) {
-                (mainLayoutState as dynamic).setState(() {
-                  (mainLayoutState as dynamic).currentIndex =
-                      2; // Pestaña de Dietas
-                });
-              }
-            },
-            onCitasTap: () {
-              final mainLayoutState = context
-                  .findAncestorStateOfType<State<MainLayout>>();
-              if (mainLayoutState != null) {
-                (mainLayoutState as dynamic).setState(() {
-                  (mainLayoutState as dynamic).currentIndex =
-                      1; // Pestaña de Citas
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-        ],
+            DailyActivity(
+              ejercicios: _getRoutineNames(),
+              totalEjercicios: userRoutines.length,
+              dietaPrincipal: todayDietName,
+              citaPrincipal: todayAppointmentText,
+              onRutinaTap: () {
+                final mainLayoutState = context
+                    .findAncestorStateOfType<State<MainLayout>>();
+                if (mainLayoutState != null) {
+                  (mainLayoutState as dynamic).setState(() {
+                    (mainLayoutState as dynamic).currentIndex =
+                        3; // Pestaña de Rutinas
+                  });
+                }
+              },
+              onDietaTap: () {
+                final mainLayoutState = context
+                    .findAncestorStateOfType<State<MainLayout>>();
+                if (mainLayoutState != null) {
+                  (mainLayoutState as dynamic).setState(() {
+                    (mainLayoutState as dynamic).currentIndex =
+                        2; // Pestaña de Dietas
+                  });
+                }
+              },
+              onCitasTap: () {
+                final mainLayoutState = context
+                    .findAncestorStateOfType<State<MainLayout>>();
+                if (mainLayoutState != null) {
+                  (mainLayoutState as dynamic).setState(() {
+                    (mainLayoutState as dynamic).currentIndex =
+                        1; // Pestaña de Citas
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }

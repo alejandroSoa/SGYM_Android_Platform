@@ -19,12 +19,21 @@ import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'services/NotificationService.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'services/FirebaseMessagingService.dart';
 
 // Handler para notificaciones en background
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print('[BACKGROUND] Notificación recibida: ${message.messageId}');
+  
+  // Guardar la notificación localmente cuando la app está cerrada
+  try {
+    await FirebaseMessagingService.saveBackgroundNotification(message);
+    print('[BACKGROUND] Notificación guardada localmente: ${message.notification?.title}');
+  } catch (e) {
+    print('[BACKGROUND] Error guardando notificación: $e');
+  }
 }
 
 void main() async {
@@ -38,6 +47,8 @@ void main() async {
 
   // Inicializar Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await FirebaseMessagingService.initialize();
 
   // Configurar handler para notificaciones en background
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
