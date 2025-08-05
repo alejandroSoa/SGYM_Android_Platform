@@ -3,6 +3,8 @@ import '../interfaces/user/profile_interface.dart';
 import '../interfaces/user/qr_interface.dart';
 import '../services/ProfileService.dart';
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -1211,6 +1213,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : '',
                           ),
                         ),
+                        const SizedBox(height: 32),
+                        
+                        // Botón de Cerrar Sesión
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              // Mostrar diálogo de confirmación
+                              bool? shouldLogout = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text('Cerrar Sesión'),
+                                    content: const Text(
+                                      '¿Estás seguro de que deseas cerrar sesión?',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text('Cerrar Sesión'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (shouldLogout == true) {
+                                // Borrar datos del usuario
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.remove('first-init-app');
+
+                                // Mostrar mensaje de éxito
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Sesión cerrada exitosamente'),
+                                      backgroundColor: Colors.green,
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+
+                                  // Esperar un momento y reiniciar la aplicación
+                                  await Future.delayed(const Duration(seconds: 1));
+
+                                  if (context.mounted) {
+                                    // Reiniciar la aplicación navegando al FirstTimeScreen
+                                    runApp(const MyApp(isFirstTime: true));
+                                  }
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.logout, color: Colors.white),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Cerrar sesión',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
                         const SizedBox(height: 150),
                       ],
                     ),

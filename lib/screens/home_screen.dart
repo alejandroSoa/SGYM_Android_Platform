@@ -8,7 +8,6 @@ import '../services/GymStatusService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../interfaces/bussiness/appointment_interface.dart';
 import '../main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -466,84 +465,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           const SizedBox(height: 12),
-
-          // Botón de logout/borrar datos de usuario
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            child: ElevatedButton(
-              onPressed: () async {
-                // Mostrar diálogo de confirmación
-                bool? shouldLogout = await showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Cerrar Sesión'),
-                      content: const Text(
-                        '¿Estás seguro de que deseas cerrar sesión?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Cerrar Sesión'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-
-                if (shouldLogout == true) {
-                  // Borrar datos del usuario
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.remove('first-init-app');
-
-                  // Mostrar mensaje de éxito
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sesión cerrada exitosamente'),
-                        backgroundColor: Colors.green,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-
-                    // Esperar un momento y reiniciar la aplicación
-                    await Future.delayed(const Duration(seconds: 1));
-
-                    if (context.mounted) {
-                      // Reiniciar la aplicación navegando al FirstTimeScreen
-                      runApp(const MyApp(isFirstTime: true));
-                    }
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.logout, color: Colors.white),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Logout',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
