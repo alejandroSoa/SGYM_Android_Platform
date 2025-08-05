@@ -26,6 +26,50 @@ class RoutineService {
     }
   }
 
+  static Future<RoutineList?> fetchRoutinesByUser(int userId) async {
+    try {
+      final url = '$_baseUrl/user-routines';
+      final response = await NetworkService.get(url);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final data = responseData['data'] as List;
+
+        // Lista para almacenar las rutinas completas
+        List<Routine> completeRoutines = [];
+
+        // Para cada asignación, obtener los detalles de la rutina
+        for (final assignment in data) {
+          final routineId = assignment['routineId'] as int;
+          final day = assignment['day'] as String;
+          final assignmentUserId = assignment['userId'] as int;
+
+          // Obtener los detalles de la rutina
+          final routineDetails = await fetchRoutineById(routineId);
+
+          if (routineDetails != null) {
+            // Crear una nueva rutina combinando los datos de la asignación con los detalles
+            final completeRoutine = Routine(
+              id: routineDetails.id,
+              name: routineDetails.name,
+              description: routineDetails.description,
+              day: day, // Usar el día de la asignación
+              userId: assignmentUserId, // Usar el userId de la asignación
+            );
+
+            completeRoutines.add(completeRoutine);
+          }
+        }
+
+        return completeRoutines;
+      }
+      return null;
+    } catch (e) {
+      print('Error in fetchRoutinesByUser: $e');
+      rethrow;
+    }
+  }
+
   // Obtener las últimas 5 rutinas del usuario actual
   static Future<RoutineList?> fetchUserRecentRoutines() async {
     try {
@@ -186,7 +230,22 @@ class RoutineService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body)['data'] as List;
-      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+
+      // Extraer los datos del ejercicio desde la estructura anidada
+      return data.map((item) {
+        final exercise = item['exercise'] as Map<String, dynamic>;
+        return {
+          'id': exercise['id'],
+          'name': exercise['name'],
+          'description': exercise['description'],
+          'equipmentType': exercise['equipmentType'],
+          'videoUrl': exercise['videoUrl'],
+          // También incluir los IDs de la relación por si son necesarios
+          'routineExerciseId': item['id'],
+          'routineId': item['routineId'],
+          'exerciseId': item['exerciseId'],
+        };
+      }).toList();
     }
     return null;
   }

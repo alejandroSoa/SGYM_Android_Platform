@@ -6,37 +6,102 @@ import '../interfaces/bussiness/appointment_interface.dart';
 class AppointmentService {
   static String get _baseUrl => dotenv.env['BUSINESS_BASE_URL'] ?? '';
 
-  // Listar citas del usuario autenticado
-  static Future<UserTrainerAppointmentList?> fetchUserAppointments() async {
+  // Listar citas del usuario autenticado (entrenador y nutriólogo)
+  static Future<UserAppointmentList?> fetchUserAppointments() async {
     try {
-      final url = '$_baseUrl/trainer-schedules/user/token';
       print('=== USER APPOINTMENT SERVICE DEBUG ===');
-      print('URL de consulta: $url');
 
-      final response = await NetworkService.get(url);
+      // Lista para almacenar todas las citas
+      List<UserAppointment> allAppointments = [];
 
-      print('Status code de respuesta: ${response.statusCode}');
-      print('Headers de respuesta: ${response.headers}');
-      print('Cuerpo de respuesta: ${response.body}');
+      // 1. Obtener citas con entrenador
+      try {
+        final trainerUrl = '$_baseUrl/trainer-schedules/user/token';
+        print('URL de citas con entrenador: $trainerUrl');
 
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        print('Datos decodificados: $responseData');
+        final trainerResponse = await NetworkService.get(trainerUrl);
+        print('Status code citas entrenador: ${trainerResponse.statusCode}');
+        print('Cuerpo respuesta entrenador: ${trainerResponse.body}');
 
-        final data = responseData['data'] as List;
-        print('Lista de citas extraída: $data');
-        print('Cantidad de citas: ${data.length}');
+        if (trainerResponse.statusCode == 200) {
+          final trainerResponseData = json.decode(trainerResponse.body);
+          final trainerData = trainerResponseData['data'] as List;
+          print('Citas con entrenador encontradas: ${trainerData.length}');
 
-        final result = data
-            .map((e) => UserTrainerAppointment.fromJson(e))
-            .toList();
-        print('Resultado final: ${result.length} citas convertidas');
-        return result;
-      } else {
-        print('Error en respuesta - Status: ${response.statusCode}');
-        print('Mensaje de error: ${response.body}');
-        return null;
+          // Convertir citas de entrenador a UserAppointment
+          final trainerAppointments = trainerData
+              .map((e) => UserTrainerAppointment.fromJson(e))
+              .map((e) => UserAppointment.fromTrainerAppointment(e))
+              .toList();
+
+          allAppointments.addAll(trainerAppointments);
+          print('Citas de entrenador agregadas: ${trainerAppointments.length}');
+        } else {
+          print(
+            'Error obteniendo citas de entrenador - Status: ${trainerResponse.statusCode}',
+          );
+        }
+      } catch (e) {
+        print('Error en petición de citas de entrenador: $e');
+        // Continuar con las citas de nutriólogo aunque falle esta
       }
+
+      // 2. Obtener citas con nutriólogo
+      try {
+        final nutritionistUrl = '$_baseUrl/nutritionist-schedules/user/token';
+        print('URL de citas con nutriólogo: $nutritionistUrl');
+
+        final nutritionistResponse = await NetworkService.get(nutritionistUrl);
+        print(
+          'Status code citas nutriólogo: ${nutritionistResponse.statusCode}',
+        );
+        print('Cuerpo respuesta nutriólogo: ${nutritionistResponse.body}');
+
+        if (nutritionistResponse.statusCode == 200) {
+          final nutritionistResponseData = json.decode(
+            nutritionistResponse.body,
+          );
+          final nutritionistData = nutritionistResponseData['data'] as List;
+          print('Citas con nutriólogo encontradas: ${nutritionistData.length}');
+
+          // Convertir citas de nutriólogo a UserAppointment
+          final nutritionistAppointments = nutritionistData
+              .map((e) => UserNutritionistAppointment.fromJson(e))
+              .map((e) => UserAppointment.fromNutritionistAppointment(e))
+              .toList();
+
+          allAppointments.addAll(nutritionistAppointments);
+          print(
+            'Citas de nutriólogo agregadas: ${nutritionistAppointments.length}',
+          );
+        } else {
+          print(
+            'Error obteniendo citas de nutriólogo - Status: ${nutritionistResponse.statusCode}',
+          );
+        }
+      } catch (e) {
+        print('Error en petición de citas de nutriólogo: $e');
+        // Continuar aunque falle esta petición
+      }
+
+      // 3. Ordenar citas por fecha y hora
+      allAppointments.sort((a, b) {
+        final dateComparison = a.date.compareTo(b.date);
+        if (dateComparison != 0) return dateComparison;
+        return a.startTime.compareTo(b.startTime);
+      });
+
+      print('=== RESUMEN FINAL ===');
+      print('Total de citas obtenidas: ${allAppointments.length}');
+      print(
+        'Citas de entrenador: ${allAppointments.where((a) => a.type == 'trainer').length}',
+      );
+      print(
+        'Citas de nutriólogo: ${allAppointments.where((a) => a.type == 'nutritionist').length}',
+      );
+      print('====================');
+
+      return allAppointments;
     } catch (e) {
       print('=== ERROR EN USER APPOINTMENT SERVICE ===');
       print('Excepción capturada: $e');

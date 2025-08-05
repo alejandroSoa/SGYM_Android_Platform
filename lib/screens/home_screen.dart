@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> userDiets = [];
   bool isLoadingDiets = false;
   String todayDietName = 'Sin dieta para hoy';
-  List<UserTrainerAppointment> userAppointments = [];
+  List<UserAppointment> userAppointments = [];
   bool isLoadingAppointments = false;
   String todayAppointmentText = 'Sin citas para hoy';
   String gymOccupancyText = 'Cargando ocupación...';
@@ -255,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     for (int i = 0; i < userAppointments.length; i++) {
       final appointment = userAppointments[i];
       print(
-        'Cita $i: ID ${appointment.id} - Fecha: ${appointment.date} - Hora: ${appointment.startTime}',
+        'Cita $i: ID ${appointment.id} - Fecha: ${appointment.date} - Hora: ${appointment.startTime} - Tipo: ${appointment.type}',
       );
     }
 
@@ -274,8 +274,15 @@ class _HomeScreenState extends State<HomeScreen> {
           0,
           5,
         ); // "10:00:00" -> "10:00"
-        todayAppointmentText = 'Cita a las $startTime';
-        print('Cita seleccionada: $todayAppointmentText');
+
+        // Determinar el tipo de cita y mostrar información relevante
+        final appointmentTypeText = appointment.type == 'trainer'
+            ? 'Entrenador'
+            : 'Nutriólogo';
+        todayAppointmentText = 'Cita con $appointmentTypeText a las $startTime';
+        print(
+          'Cita seleccionada: $todayAppointmentText (Tipo: ${appointment.type})',
+        );
       } else {
         todayAppointmentText = 'Sin citas para hoy';
         print('No se encontró cita para el día: $todayString');

@@ -29,7 +29,7 @@ class _UserRoutinesScreenState extends State<UserRoutinesScreen> {
     });
 
     try {
-      final routinesList = await RoutineService.fetchRoutines();
+      final routinesList = await RoutineService.fetchRoutinesByUser(0);
       setState(() {
         userRoutines = routinesList ?? [];
         isLoadingRoutines = false;

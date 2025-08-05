@@ -19,6 +19,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   int? userRoleId;
   String selectedDate = '';
 
+  // Caché para nombres de usuarios
+  Map<int, String> _userNamesCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +37,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       isLoadingAppointments = true;
       errorMessage = null;
     });
+
+    // Limpiar caché de nombres cuando se recargan las citas
+    _userNamesCache.clear();
 
     try {
       // Obtener el usuario actual
@@ -90,12 +96,49 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       }
 
       print('Total de citas cargadas: ${appointments.length}');
+
+      // Precargar nombres de usuarios para evitar "Cargando..." en el futuro
+      _preloadUserNames();
     } catch (e) {
       print('Error al cargar citas: $e');
       setState(() {
         errorMessage = 'Error al cargar citas: $e';
         isLoadingAppointments = false;
       });
+    }
+  }
+
+  // Método para precargar nombres de usuarios en segundo plano
+  Future<void> _preloadUserNames() async {
+    Set<int> userIds = {};
+
+    // Extraer todos los IDs de usuarios de las citas
+    for (final appointment in appointments) {
+      if (appointment is TrainerAppointment) {
+        userIds.add(appointment.userId);
+      } else if (appointment is NutritionistAppointment) {
+        userIds.add(appointment.userId);
+      } else if (appointment is UserTrainerAppointment) {
+        userIds.add(appointment.trainerId);
+      } else if (appointment is UserAppointment) {
+        if (appointment.trainerId != null) {
+          userIds.add(appointment.trainerId!);
+        }
+        if (appointment.nutritionistId != null) {
+          userIds.add(appointment.nutritionistId!);
+        }
+      }
+    }
+
+    // Precargar nombres en segundo plano (sin await para no bloquear la UI)
+    for (final userId in userIds) {
+      if (!_userNamesCache.containsKey(userId)) {
+        _getUserName(userId).catchError((error) {
+          // Ignorar errores en precarga, se manejarán cuando se muestre la UI
+          print('Error precargando nombre del usuario $userId: $error');
+          return 'Usuario $userId'; // Valor por defecto en caso de error
+        });
+      }
     }
   }
 
@@ -989,6 +1032,21 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           '${_formatTime(appointment.startTime)} a ${_formatTime(appointment.endTime)}';
       icon = Icons.person;
       iconColor = Colors.blue;
+    } else if (appointment is UserAppointment) {
+      // Nuevo tipo unificado para usuarios
+      if (appointment.type == 'trainer') {
+        title = 'Sesión con Entrenador';
+        userId = appointment.trainerId;
+        icon = Icons.fitness_center;
+        iconColor = Colors.orange;
+      } else if (appointment.type == 'nutritionist') {
+        title = 'Consulta con Nutriólogo';
+        userId = appointment.nutritionistId;
+        icon = Icons.restaurant;
+        iconColor = Colors.green;
+      }
+      time =
+          '${_formatTime(appointment.startTime)} a ${_formatTime(appointment.endTime)}';
     } else {
       // Fallback para tipo dinámico
       title = 'Cita';
@@ -1033,40 +1091,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                // Usar FutureBuilder para obtener el nombre del usuario
+                // Usar el widget optimizado para nombres de usuario
                 if (userId != null)
-                  FutureBuilder<String>(
-                    future: _getUserName(userId),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Text(
-                          'Cargando...',
-                          style: TextStyle(color: Colors.black54, fontSize: 14),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Text(
-                          appointment is UserTrainerAppointment
-                              ? 'Entrenador ID: $userId'
-                              : 'Cliente ID: $userId',
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
-                        );
-                      } else {
-                        final userName = snapshot.data ?? '';
-                        final prefix = appointment is UserTrainerAppointment
-                            ? 'Entrenador: '
-                            : 'Cliente: ';
-                        return Text(
-                          '$prefix$userName',
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 14,
-                          ),
-                        );
-                      }
-                    },
+                  _buildUserNameWidget(
+                    userId,
+                    appointment is UserTrainerAppointment ||
+                        (appointment is UserAppointment &&
+                            appointment.type == 'trainer'),
                   )
                 else
                   const Text(
@@ -1101,14 +1132,74 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  // Método auxiliar para obtener el nombre del usuario
+  // Método auxiliar para obtener el nombre del usuario con caché
   Future<String> _getUserName(int userId) async {
+    // Verificar si ya tenemos el nombre en caché
+    if (_userNamesCache.containsKey(userId)) {
+      return _userNamesCache[userId]!;
+    }
+
     try {
       final profile = await ProfileService.fetchProfileById(userId);
-      return profile?.fullName ?? 'Usuario $userId';
+      final userName = profile?.fullName ?? 'Usuario $userId';
+
+      // Guardar en caché
+      _userNamesCache[userId] = userName;
+
+      return userName;
     } catch (e) {
       print('Error obteniendo nombre del usuario $userId: $e');
-      return 'Usuario $userId';
+      final fallbackName = 'Usuario $userId';
+
+      // Guardar también el fallback en caché para evitar repetir errores
+      _userNamesCache[userId] = fallbackName;
+
+      return fallbackName;
+    }
+  }
+
+  // Método para obtener el nombre de forma síncrona si está en caché
+  String? _getCachedUserName(int userId) {
+    return _userNamesCache[userId];
+  }
+
+  // Widget para mostrar el nombre del usuario con manejo de caché
+  Widget _buildUserNameWidget(int userId, bool isTrainer) {
+    final cachedName = _getCachedUserName(userId);
+
+    if (cachedName != null) {
+      // Si tenemos el nombre en caché, mostrarlo inmediatamente
+      final prefix = isTrainer ? 'Entrenador: ' : 'Cliente: ';
+      return Text(
+        '$prefix$cachedName',
+        style: const TextStyle(color: Colors.black54, fontSize: 14),
+      );
+    } else {
+      // Si no está en caché, usar FutureBuilder
+      return FutureBuilder<String>(
+        future: _getUserName(userId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Text(
+              'Cargando...',
+              style: TextStyle(color: Colors.black54, fontSize: 14),
+            );
+          } else if (snapshot.hasError) {
+            final prefix = isTrainer ? 'Entrenador' : 'Cliente';
+            return Text(
+              '$prefix ID: $userId',
+              style: const TextStyle(color: Colors.black54, fontSize: 14),
+            );
+          } else {
+            final userName = snapshot.data ?? '';
+            final prefix = isTrainer ? 'Entrenador: ' : 'Cliente: ';
+            return Text(
+              '$prefix$userName',
+              style: const TextStyle(color: Colors.black54, fontSize: 14),
+            );
+          }
+        },
+      );
     }
   }
 
@@ -1144,6 +1235,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       // Si la fecha ya está en formato YYYY-MM-DD, devolverla tal como está
       if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
         return dateString;
+      }
+
+      // Si la fecha está en formato YYYY/MM/DD, convertir a YYYY-MM-DD
+      if (RegExp(r'^\d{4}/\d{2}/\d{2}$').hasMatch(dateString)) {
+        return dateString.replaceAll('/', '-');
       }
 
       // Si la fecha está en formato ISO (2025-08-04T00:00:00.000Z), extraer solo la parte de la fecha
@@ -1192,6 +1288,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         print(
           'UserTrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
         );
+      } else if (appointment is UserAppointment) {
+        appointmentDate = _normalizeDate(appointment.date);
+        print(
+          'UserAppointment (${appointment.type}) - Original: ${appointment.date}, Normalized: $appointmentDate',
+        );
       }
 
       final matches = appointmentDate == selectedDate;
@@ -1201,27 +1302,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
     print('Filtered appointments count: ${filtered.length}');
     return filtered;
-  }
-
-  // Método para filtrar las citas de hoy (mantenido para compatibilidad)
-  List<dynamic> _getTodayAppointments() {
-    final today = DateTime.now();
-    final todayString =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
-    return appointments.where((appointment) {
-      String appointmentDate = '';
-
-      if (appointment is TrainerAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-      } else if (appointment is NutritionistAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-      } else if (appointment is UserTrainerAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-      }
-
-      return appointmentDate == todayString;
-    }).toList();
   }
 }
 
@@ -1286,64 +1366,6 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
     return '';
   }
 
-  List<dynamic> _getAppointmentsForSelectedDay() {
-    final selectedDateString = _getSelectedDateString();
-    print('=== DEBUG CALENDAR FILTERING ===');
-    print('Calendar selected date: $selectedDateString');
-
-    final filtered = widget.appointments.where((appointment) {
-      String appointmentDate = '';
-
-      if (appointment is TrainerAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-        print(
-          'Calendar TrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
-        );
-      } else if (appointment is NutritionistAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-        print(
-          'Calendar NutritionistAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
-        );
-      } else if (appointment is UserTrainerAppointment) {
-        appointmentDate = _normalizeDate(appointment.date);
-        print(
-          'Calendar UserTrainerAppointment - Original: ${appointment.date}, Normalized: $appointmentDate',
-        );
-      }
-
-      final matches = appointmentDate == selectedDateString;
-      print(
-        'Calendar date match: $appointmentDate == $selectedDateString = $matches',
-      );
-      return matches;
-    }).toList();
-
-    print('Calendar filtered appointments count: ${filtered.length}');
-    return filtered;
-  }
-
-  // Método auxiliar para normalizar fechas (copiado del componente padre)
-  String _normalizeDate(String dateString) {
-    try {
-      // Si la fecha ya está en formato YYYY-MM-DD, devolverla tal como está
-      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
-        return dateString;
-      }
-
-      // Si la fecha está en formato ISO (2025-08-04T00:00:00.000Z), extraer solo la parte de la fecha
-      if (dateString.contains('T')) {
-        return dateString.split('T')[0];
-      }
-
-      // Si no coincide con ningún formato conocido, intentar parsear como DateTime
-      final parsedDate = DateTime.parse(dateString);
-      return '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
-    } catch (e) {
-      print('Error normalizando fecha $dateString: $e');
-      return dateString; // Devolver la fecha original si hay error
-    }
-  }
-
   void _onDaySelected(int index) {
     setState(() {
       selectedDayIndex = index;
@@ -1356,7 +1378,6 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
     final weekDays = _getWeekDays();
     final weekNumbers = _getCurrentWeekDays();
     final todayIndex = _getTodayIndex();
-    final selectedAppointments = _getAppointmentsForSelectedDay();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1385,55 +1406,6 @@ class _WeeklyCalendarState extends State<_WeeklyCalendar> {
                 ),
               );
             }).toList(),
-          ),
-          const SizedBox(height: 16),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Día seleccionado:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: selectedAppointments.isEmpty
-                ? const Text(
-                    'No hay citas programadas para este día',
-                    style: TextStyle(color: Colors.black54),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: selectedAppointments.map((appointment) {
-                      String title = '';
-                      String time = '';
-
-                      if (appointment is TrainerAppointment) {
-                        title = 'Sesión de Entrenamiento';
-                        time =
-                            '${appointment.startTime} - ${appointment.endTime}';
-                      } else if (appointment is NutritionistAppointment) {
-                        title = 'Consulta Nutricional';
-                        time =
-                            '${appointment.startTime} - ${appointment.endTime}';
-                      } else if (appointment is UserTrainerAppointment) {
-                        title = 'Sesión con Entrenador';
-                        time =
-                            '${appointment.startTime} - ${appointment.endTime}';
-                      }
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '$title - $time',
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 12,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
           ),
           const SizedBox(height: 16),
           Align(
