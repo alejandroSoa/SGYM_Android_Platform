@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/OAuthWebView.dart';
 import '../services/UserService.dart';
+import '../services/NotificationService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../network/NetworkService.dart';
 import 'dart:convert';
@@ -65,6 +66,20 @@ class AuthService {
         throw AuthException("No se pudo obtener información del usuario.");
       }
       await UserService.setUser(userData);
+
+      // Enviar FCM token al servidor después del login exitoso
+      final userId = userData['id'];
+      print('[AUTH_SERVICE] Usuario autenticado: $userId');
+      if (userId != null) {
+        print('[AUTH_SERVICE] Enviando FCM token para usuario ID: $userId');
+        try {
+          await NotificationService.sendTokenToServer(userId);
+        } catch (e) {
+          print('[AUTH_SERVICE] Error enviando FCM token: $e');
+          // No fallar el login por error de FCM token
+        }
+      }
+
       return true;
     } catch (e) {
       print("[AUTH ERROR]: $e");

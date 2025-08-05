@@ -6,11 +6,12 @@ import '../network/NetworkService.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class NotificationService {
+  static String? _fcmToken;
   static final FirebaseMessaging _firebaseMessaging =
       FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  static String get _baseUrl => dotenv.env['BUSINESS_BASE_URL'] ?? '';
+  static String get _baseUrl => dotenv.env['NOTIFICATION_BASE_URL'] ?? '';
 
   // Inicializar el servicio
   static Future<void> initialize() async {
@@ -26,7 +27,7 @@ class NotificationService {
     _configureListeners();
 
     // Obtener y guardar FCM token
-    await _saveFCMToken();
+    await _getFCMToken();
   }
 
   // Solicitar permisos
@@ -83,14 +84,15 @@ class NotificationService {
   }
 
   // Obtener y guardar FCM token
-  static Future<void> _saveFCMToken() async {
+  static Future<void> _getFCMToken() async {
     try {
       String? token = await _firebaseMessaging.getToken();
       if (token != null) {
         print('=== FCM TOKEN OBTENIDO ===');
         print('FCM Token: $token');
         print('==========================');
-
+        _fcmToken = token; // Guardar el token en la variable estática
+        print('[NOTIFICATION_SERVICE] FCM Token guardado: $_fcmToken');
         // Por ahora solo imprimir, no enviar al servidor
         // await _sendTokenToServer(token); // ← Comentado temporalmente
       }
@@ -100,6 +102,7 @@ class NotificationService {
         print('=== FCM TOKEN ACTUALIZADO ===');
         print('Nuevo FCM Token: $token');
         print('=============================');
+        _fcmToken = token; // Actualizar el token en la variable estática
 
         // Por ahora solo imprimir, no enviar al servidor
         // _sendTokenToServer(token); // ← Comentado temporalmente
@@ -110,12 +113,24 @@ class NotificationService {
   }
 
   // Enviar token al servidor
-  static Future<void> _sendTokenToServer(String token) async {
+  static Future<void> sendTokenToServer(int userId) async {
     try {
-      final url = '$_baseUrl/users/fcm-token';
-      final body = {'fcm_token': token};
+      if (_fcmToken == null) {
+        print('[NOTIFICATION_SERVICE] FCM Token no disponible');
+        return;
+      }
 
-      final response = await NetworkService.post(url, body: body);
+      final url = '$_baseUrl/users/fcm-token';
+      final body = {'fcm_token': _fcmToken!, 'user_id': userId};
+
+      print('[NOTIFICATION_SERVICE] Enviando FCM token al servidor...');
+      print('[NOTIFICATION_SERVICE] URL: $url');
+      print('[NOTIFICATION_SERVICE] User ID: $userId');
+      print('[NOTIFICATION_SERVICE] Token: $_fcmToken');
+      print('[NOTIFICATION_SERVICE] Body: $body');
+      print(url);
+
+      final response = await NetworkService.put(url, body: body);
 
       if (response.statusCode == 200) {
         print('[NOTIFICATION_SERVICE] FCM Token guardado exitosamente');
@@ -127,6 +142,22 @@ class NotificationService {
     } catch (e) {
       print('[NOTIFICATION_SERVICE] Error enviando FCM token al servidor: $e');
     }
+  }
+
+  // Método público para obtener el FCM token actual
+  static String? get fcmToken => _fcmToken;
+
+  // Método público para guardar el FCM token (llamado desde AuthService)
+  static Future<void> saveFCMToken(int userId) async {
+    print('[NOTIFICATION_SERVICE] Guardando FCM token para usuario: $userId');
+
+    // Si no tenemos token, intentar obtenerlo
+    if (_fcmToken == null) {
+      await _getFCMToken();
+    }
+
+    // Enviar token al servidor
+    await sendTokenToServer(userId);
   }
 
   // Mostrar notificación local
