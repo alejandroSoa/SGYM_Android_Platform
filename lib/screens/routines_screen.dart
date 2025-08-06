@@ -1517,7 +1517,7 @@ class _RoutineExercisesManager extends StatefulWidget {
 }
 
 class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
-  List<Map<String, dynamic>> routineExercises = [];
+  List<RoutineExerciseResponse> routineExercises = [];
   List<Exercise> allExercises = [];
   bool isLoadingRoutineExercises = true;
   bool isLoadingAllExercises = true;
@@ -1531,7 +1531,7 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
     });
   }
 
-  // Método para enriquecer los datos de rutina con información completa del ejercicio
+  // Método para cargar ejercicios de rutina con interfaz estructurada
   Future<void> _loadRoutineExercises() async {
     try {
       setState(() {
@@ -1540,27 +1540,23 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
       });
 
       print('🔍 Cargando ejercicios para rutina ID: ${widget.routine.id}');
-      final exercises = await RoutineService.fetchExercisesOfRoutine(
+      final exercises = await RoutineService.fetchRoutineExercisesStructured(
         widget.routine.id,
       );
 
-      print('📦 Respuesta de fetchExercisesOfRoutine:');
+      print('📦 Respuesta de fetchRoutineExercisesStructured:');
       print('   - Número de ejercicios: ${exercises?.length ?? 0}');
-      print('   - Datos completos: $exercises');
 
       if (exercises != null) {
         for (int i = 0; i < exercises.length; i++) {
           final exercise = exercises[i];
           print('   📝 Ejercicio $i:');
-          print('      - ID: ${exercise['id']}');
-          print('      - Nombre: ${exercise['name'] ?? 'N/A'}');
-          print('      - Descripción: ${exercise['description'] ?? 'N/A'}');
-          print(
-            '      - Equipment Type: ${exercise['equipment_type'] ?? 'N/A'}',
-          );
-          print('      - Exercise ID: ${exercise['exercise_id'] ?? 'N/A'}');
-          print('      - Routine ID: ${exercise['routine_id'] ?? 'N/A'}');
-          print('      - Datos completos del ejercicio: $exercise');
+          print('      - ID: ${exercise.id}');
+          print('      - Nombre: ${exercise.exercise.name}');
+          print('      - Descripción: ${exercise.exercise.description}');
+          print('      - Equipment Type: ${exercise.exercise.equipmentType}');
+          print('      - Exercise ID: ${exercise.exerciseId}');
+          print('      - Routine ID: ${exercise.routineId}');
         }
       }
 
@@ -1640,11 +1636,11 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
   }
 
   Future<void> _removeExerciseFromRoutine(
-    Map<String, dynamic> routineExercise,
+    RoutineExerciseResponse routineExercise,
   ) async {
     try {
       final success = await RoutineService.removeExerciseFromRoutine(
-        routineExercise['id'] as int,
+        routineExercise.id,
       );
 
       if (success) {
@@ -1653,7 +1649,7 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Ejercicio "${routineExercise['exercise']?['name'] ?? 'Ejercicio'}" eliminado de la rutina',
+                'Ejercicio "${routineExercise.exercise.name}" eliminado de la rutina',
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
@@ -1698,9 +1694,7 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
 
     // Filtrar ejercicios que ya están en la rutina
     final assignedExerciseIds = routineExercises
-        .map((re) => re['exerciseId'] as int?)
-        .where((id) => id != null)
-        .cast<int>()
+        .map((re) => re.exerciseId)
         .toList();
 
     print('🔍 IDs de ejercicios ya asignados: $assignedExerciseIds');
@@ -1848,11 +1842,9 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
                   itemCount: routineExercises.length,
                   itemBuilder: (context, index) {
                     final routineExercise = routineExercises[index];
-                    final exercise =
-                        routineExercise['exercise'] as Map<String, dynamic>?;
 
                     // Mostrar datos directos del API
-                    print('🎯 Mostrando ejercicio $index: $routineExercise');
+                    print('🎯 Mostrando ejercicio $index: ${routineExercise.exercise.name}');
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -1862,11 +1854,11 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
                           color: Color(0xFF6366F1),
                         ),
                         title: Text(
-                          exercise?['name'] ?? 'Sin nombre',
+                          routineExercise.exercise.name,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
-                          exercise?['description'] ?? 'Sin descripción',
+                          routineExercise.exercise.description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1888,9 +1880,8 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
     );
   }
 
-  void _showRemoveExerciseConfirmation(Map<String, dynamic> routineExercise) {
-    final exercise = routineExercise['exercise'] as Map<String, dynamic>?;
-    final exerciseName = exercise?['name'] ?? 'Ejercicio';
+  void _showRemoveExerciseConfirmation(RoutineExerciseResponse routineExercise) {
+    final exerciseName = routineExercise.exercise.name;
 
     showDialog(
       context: context,

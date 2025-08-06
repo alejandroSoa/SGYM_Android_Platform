@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DailyActivity extends StatelessWidget {
-  final List<String> ejercicios; // Ahora representa nombres de rutinas
-  final int totalEjercicios; // Ahora representa total de rutinas
+  final String rutinaPrincipal;
   final String dietaPrincipal;
   final String citaPrincipal;
   final VoidCallback? onRutinaTap;
@@ -11,17 +10,13 @@ class DailyActivity extends StatelessWidget {
 
   const DailyActivity({
     super.key,
-    required this.ejercicios,
-    required this.totalEjercicios,
+    required this.rutinaPrincipal,
     required this.dietaPrincipal,
     required this.citaPrincipal,
     this.onRutinaTap,
     this.onDietaTap,
     this.onCitasTap,
-  }) : assert(
-         ejercicios.length == 5,
-         'Debe haber exactamente 5 elementos en la lista',
-       );
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +41,8 @@ class DailyActivity extends StatelessWidget {
                 child: GestureDetector(
                   onTap: onRutinaTap,
                   child: Container(
-                    padding: const EdgeInsets.all(10),
+                    height: 180,
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -79,31 +75,20 @@ class DailyActivity extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        ...ejercicios.map(
-                          (e) => Text(
-                            e,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(height: 19),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Rutinas',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            Text(
-                              '$totalEjercicios',
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              rutinaPrincipal,
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                                fontSize: 14,
                               ),
+                              textAlign: TextAlign.center,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),

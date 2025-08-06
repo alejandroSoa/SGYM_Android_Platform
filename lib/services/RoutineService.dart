@@ -250,6 +250,22 @@ class RoutineService {
     return null;
   }
 
+  // Nuevo método para listar ejercicios de una rutina con interfaz estructurada
+  static Future<RoutineExerciseResponseList?> fetchRoutineExercisesStructured(
+    int routineId,
+  ) async {
+    final url = '$_baseUrl/routines/$routineId/exercises';
+    final response = await NetworkService.get(url);
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final data = responseData['data'] as List;
+
+      return data.map((item) => RoutineExerciseResponse.fromJson(item)).toList();
+    }
+    return null;
+  }
+
   // Quitar ejercicio de una rutina
   static Future<bool> removeExerciseFromRoutine(int routineExerciseId) async {
     final url = '$_baseUrl/routine-exercises/$routineExerciseId';

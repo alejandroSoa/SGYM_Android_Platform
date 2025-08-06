@@ -21,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Routine> userRoutines = [];
   bool isLoadingRoutines = false;
+  String todayRoutineName = 'Sin rutina para hoy';
   List<Map<String, dynamic>> userDiets = [];
   bool isLoadingDiets = false;
   String todayDietName = 'Sin dieta para hoy';
@@ -104,15 +105,25 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
+      print('=== DEBUG RUTINAS: Iniciando carga de rutinas ===');
       final routines = await RoutineService.fetchUserRecentRoutines();
+      print('=== DEBUG RUTINAS: Respuesta recibida ===');
+      print('Rutinas recibidas: $routines');
+      print('Tipo de respuesta: ${routines.runtimeType}');
+      print('Cantidad de rutinas: ${routines?.length ?? 0}');
+
       setState(() {
         userRoutines = routines ?? [];
         isLoadingRoutines = false;
+        _updateTodayRoutine();
       });
     } catch (e) {
-      print('Error al cargar rutinas del usuario: $e');
+      print('=== DEBUG RUTINAS: Error al cargar rutinas ===');
+      print('Error completo: $e');
+      print('Tipo de error: ${e.runtimeType}');
       setState(() {
         isLoadingRoutines = false;
+        todayRoutineName = 'Error al cargar rutina';
       });
     }
   }
@@ -254,6 +265,46 @@ class _HomeScreenState extends State<HomeScreen> {
     return weekdays[now.weekday - 1];
   }
 
+  void _updateTodayRoutine() {
+    print('=== DEBUG RUTINAS: Actualizando rutina del día ===');
+
+    if (isLoadingRoutines) {
+      print('Aún cargando rutinas...');
+      setState(() {
+        todayRoutineName = 'Cargando rutina...';
+      });
+      return;
+    }
+
+    final today = _getCurrentDayInEnglish();
+    print('Día actual en inglés: $today');
+    print('Total de rutinas disponibles: ${userRoutines.length}');
+
+    // Mostrar todas las rutinas disponibles
+    for (int i = 0; i < userRoutines.length; i++) {
+      final routine = userRoutines[i];
+      print('Rutina $i: ${routine.name} - Día: ${routine.day}');
+    }
+
+    final todayRoutine = userRoutines.where((routine) {
+      final routineDay = routine.day.toLowerCase();
+      print('Comparando: "$routineDay" == "$today"');
+      return routineDay == today.toLowerCase();
+    }).toList();
+
+    print('Rutinas encontradas para hoy: ${todayRoutine.length}');
+
+    setState(() {
+      if (todayRoutine.isNotEmpty) {
+        todayRoutineName = todayRoutine.first.name;
+        print('Rutina seleccionada: $todayRoutineName');
+      } else {
+        todayRoutineName = 'Sin rutina para hoy';
+        print('No se encontró rutina para el día: $today');
+      }
+    });
+  }
+
   void _updateTodayDiet() {
     print('=== DEBUG DIETAS: Actualizando dieta del día ===');
 
@@ -348,28 +399,6 @@ class _HomeScreenState extends State<HomeScreen> {
         print('No se encontró cita para el día: $todayString');
       }
     });
-  }
-
-  List<String> _getRoutineNames() {
-    if (isLoadingRoutines) {
-      return ['Cargando rutinas...', '', '', '', ''];
-    }
-
-    if (userRoutines.isEmpty) {
-      return ['Sin rutinas creadas', '', '', '', ''];
-    }
-
-    List<String> routineNames = userRoutines
-        .map((routine) => routine.name)
-        .toList();
-
-    // Completar con strings vacíos hasta tener 5 elementos
-    while (routineNames.length < 5) {
-      routineNames.add('');
-    }
-
-    // Tomar solo los primeros 5
-    return routineNames.take(5).toList();
   }
 
   @override
@@ -505,8 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
 
             DailyActivity(
-              ejercicios: _getRoutineNames(),
-              totalEjercicios: userRoutines.length,
+              rutinaPrincipal: todayRoutineName,
               dietaPrincipal: todayDietName,
               citaPrincipal: todayAppointmentText,
               onRutinaTap: () {
