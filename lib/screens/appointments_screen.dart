@@ -1174,18 +1174,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 );
               },
             ),
-
-          const SizedBox(height: 24),
-          const Text(
-            'Recordatorios',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              color: Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _ReminderCard(),
         ],
       ),
     );
@@ -1650,32 +1638,6 @@ class _DayCircle extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
-      ),
-    );
-  }
-}
-
-class _ReminderCard extends StatelessWidget {
-  const _ReminderCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Color(0xFFF2F2FF),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          Text('Recordatorio del día'),
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: Color.fromRGBO(127, 17, 224, 1),
-            child: Icon(Icons.info_outline, color: Colors.white, size: 16),
-          ),
-        ],
       ),
     );
   }

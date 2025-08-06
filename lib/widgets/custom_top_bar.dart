@@ -54,7 +54,7 @@ class CustomTopBar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Hello,',
+                        'Hola,',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.black54,
