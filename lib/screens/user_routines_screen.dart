@@ -551,6 +551,20 @@ class _UserRoutineExercisesViewerState
     _loadRoutineExercises();
   }
 
+  // Convertir tipos de equipamiento del inglés al español
+  String _convertEquipmentToSpanish(String englishEquipment) {
+    switch (englishEquipment.toLowerCase()) {
+      case 'machine':
+        return 'Máquina';
+      case 'dumbbell':
+        return 'Mancuernas';
+      case 'other':
+        return 'Otro';
+      default:
+        return englishEquipment;
+    }
+  }
+
   Future<void> _loadRoutineExercises() async {
     try {
       setState(() {
@@ -687,35 +701,13 @@ class _UserRoutineExercisesViewerState
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      exercise['equipmentType'],
+                      _convertEquipmentToSpanish(exercise['equipmentType']),
                       style: TextStyle(
                         color: Colors.blue[700],
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
-                if (exercise['videoUrl'] != null &&
-                    exercise['videoUrl'].toString().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.play_circle_fill,
-                        color: Colors.red[600],
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Ver video demostrativo',
-                        style: TextStyle(
-                          color: Colors.red[600],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ],
