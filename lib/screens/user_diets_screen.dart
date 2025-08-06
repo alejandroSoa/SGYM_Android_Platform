@@ -93,7 +93,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     if (isLoadingDiets) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
         ),
       );
     }
@@ -103,18 +103,27 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
             Text(
               'Error al cargar dietas',
               style: TextStyle(
-                color: Colors.red[700],
-                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
               ),
             ),
             const SizedBox(height: 8),
+            Text(
+              dietsError!,
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadUserDiets,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
+                backgroundColor: const Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Reintentar'),
@@ -129,7 +138,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant_menu, size: 80, color: Colors.grey[400]),
+            Icon(Icons.restaurant_menu, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No tienes dietas asignadas',
@@ -141,7 +150,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tu nutricionista aún no te ha asignado ninguna dieta.',
+              'Tu nutricionista te asignará dietas pronto',
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
@@ -171,94 +180,132 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     ];
 
     return Column(
-      children: [
-        for (int i = 0; i < daysInSpanish.length; i++) ...[
-          _buildDaySection(
-            daysInSpanish[i],
-            groupedDiets[daysInEnglish[i]] ?? [],
-          ),
-          if (i < daysInSpanish.length - 1) const SizedBox(height: 16),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDaySection(String dayName, List<UserDiet> diets) {
-    // Si no hay dietas, mostrar sección gris
-    if (diets.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFCAD1D9),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          dayName,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[600],
-          ),
-        ),
-      );
-    }
-
-    // Si hay dietas, mostrar en formato expandido
-    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Día activo con dietas
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Text(
-            dayName,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
+      children: daysInSpanish.asMap().entries.map((entry) {
+        final index = entry.key;
+        final day = entry.value;
+        final dayDiets = groupedDiets[daysInEnglish[index]] ?? [];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado del día
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: dayDiets.isEmpty
+                    ? Colors.grey[200]
+                    : const Color(0xFF6366F1),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: dayDiets.isNotEmpty
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                day,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: dayDiets.isEmpty ? Colors.grey[500] : Colors.white,
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
 
-        // Lista de dietas
-        for (int i = 0; i < diets.length; i++) ...[
-          _buildDietCard(diets[i]),
-          if (i < diets.length - 1) const SizedBox(height: 8),
-        ],
-      ],
-    );
-  }
+            // Dietas del día
+            if (dayDiets.isNotEmpty) ...[
+              ...dayDiets.map(
+                (diet) => Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      _showDietDetails(context, diet);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.restaurant_menu,
+                              color: Color(0xFF6366F1),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              diet.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Text(
+                  'Sin dietas para este día',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[500],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
 
-  Widget _buildDietCard(UserDiet diet) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFCAD1D9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: () {
-          _showDietDetails(context, diet);
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Text(
-          diet.name,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-        ),
-      ),
+            const SizedBox(height: 16),
+          ],
+        );
+      }).toList(),
     );
   }
 
@@ -297,12 +344,12 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50).withOpacity(0.1),
+                          color: const Color(0xFF6366F1).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           Icons.restaurant_menu,
-                          color: const Color(0xFF4CAF50),
+                          color: const Color(0xFF6366F1),
                           size: 24,
                         ),
                       ),
@@ -340,21 +387,13 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4CAF50),
+                      color: Color(0xFF6366F1),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F8E9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      diet.description ?? 'Sin descripción disponible',
-                      style: const TextStyle(fontSize: 16, height: 1.5),
-                    ),
+                  Text(
+                    diet.description ?? 'Sin descripción disponible',
+                    style: const TextStyle(fontSize: 16, height: 1.5),
                   ),
                   const SizedBox(height: 24),
                   // Botón de Ver Alimentos
@@ -366,7 +405,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                         _showDietFoodsDialog(diet);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
+                        backgroundColor: const Color(0xFF6366F1),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -449,15 +488,24 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con título y botón de regreso
-              Row(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
@@ -474,16 +522,19 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(
-                    width: 48,
-                  ), // Para balancear el espacio del IconButton
+                  const SizedBox(width: 48), // Para balancear el espacio
                 ],
               ),
-              const SizedBox(height: 20),
+            ),
 
-              _buildDietsSection(),
-            ],
-          ),
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: _buildDietsSection(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -536,7 +587,7 @@ class _UserDietFoodsWidgetState extends State<_UserDietFoodsWidget> {
     if (isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
         ),
       );
     }
@@ -557,7 +608,7 @@ class _UserDietFoodsWidgetState extends State<_UserDietFoodsWidget> {
             ElevatedButton(
               onPressed: _loadDietFoods,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4CAF50),
+                backgroundColor: const Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Reintentar'),
@@ -595,70 +646,94 @@ class _UserDietFoodsWidgetState extends State<_UserDietFoodsWidget> {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFCAD1D9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListView.builder(
-        itemCount: dietFoods.length,
-        itemBuilder: (context, index) {
-          final dietFood = dietFoods[index];
-          final food = dietFood['food'];
+    return ListView.builder(
+      itemCount: dietFoods.length,
+      itemBuilder: (context, index) {
+        final dietFood = dietFoods[index];
+        final food = dietFood['food'];
 
-          if (food == null) {
-            return Container();
-          }
+        if (food == null) {
+          return Container();
+        }
 
-          final foodName = food['name']?.toString() ?? 'Alimento desconocido';
-          final foodGrams = food['grams']?.toString() ?? '0';
-          final foodCalories = food['calories']?.toString() ?? '0';
-          final foodOtherInfo = food['other_info']?.toString();
+        final foodName = food['name']?.toString() ?? 'Alimento desconocido';
+        final foodGrams = food['grams']?.toString() ?? '0';
+        final foodCalories = food['calories']?.toString() ?? '0';
+        final foodOtherInfo = food['other_info']?.toString();
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Padding(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  foodName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.restaurant,
+                    color: Color(0xFF6366F1),
+                    size: 20,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${foodGrams}g - ${foodCalories} cal',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        foodName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${foodGrams}g - ${foodCalories} cal',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (foodOtherInfo != null && foodOtherInfo.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          foodOtherInfo,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (foodOtherInfo != null && foodOtherInfo.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    foodOtherInfo,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                      height: 1.4,
-                    ),
-                  ),
-                ],
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
