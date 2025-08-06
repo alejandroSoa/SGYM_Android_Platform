@@ -10,10 +10,18 @@ class DietFood {
   });
 
   factory DietFood.fromJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    final foodId = json['foodId'] ?? json['food_id'];
+    final dietId = json['dietId'] ?? json['diet_id'];
+    
+    if (id == null || foodId == null || dietId == null) {
+      throw ArgumentError('Missing required fields in DietFood JSON: $json');
+    }
+    
     return DietFood(
-      id: json['id'],
-      foodId: json['food_id'],
-      dietId: json['diet_id'],
+      id: id is int ? id : int.parse(id.toString()),
+      foodId: foodId is int ? foodId : int.parse(foodId.toString()),
+      dietId: dietId is int ? dietId : int.parse(dietId.toString()),
     );
   }
 
