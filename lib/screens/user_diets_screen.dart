@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../interfaces/bussiness/diet_interface.dart';
+import '../interfaces/bussiness/user_diet_interface.dart';
 import '../services/DietService.dart';
 
 class UserDietsScreen extends StatefulWidget {
@@ -12,7 +12,7 @@ class UserDietsScreen extends StatefulWidget {
 }
 
 class _UserDietsScreenState extends State<UserDietsScreen> {
-  List<Diet> userDiets = [];
+  List<UserDiet> userDiets = [];
   bool isLoadingDiets = false;
   String? dietsError;
 
@@ -29,10 +29,9 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     });
 
     try {
-      final dietsList = await DietService.fetchDiets();
+      final dietsList = await DietService.fetchUserDiets();
       setState(() {
-        userDiets =
-            dietsList?.map((dietMap) => Diet.fromJson(dietMap)).toList() ?? [];
+        userDiets = dietsList ?? [];
         isLoadingDiets = false;
       });
       print("Dietas del usuario cargadas: ${userDiets.length}");
@@ -68,8 +67,8 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
   }
 
   // Organizar dietas por día de la semana
-  Map<String, List<Diet>> _groupDietsByDay() {
-    Map<String, List<Diet>> groupedDiets = {};
+  Map<String, List<UserDiet>> _groupDietsByDay() {
+    Map<String, List<UserDiet>> groupedDiets = {};
 
     final days = [
       'monday',
@@ -184,7 +183,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     );
   }
 
-  Widget _buildDaySection(String dayName, List<Diet> diets) {
+  Widget _buildDaySection(String dayName, List<UserDiet> diets) {
     // Si no hay dietas, mostrar sección gris
     if (diets.isEmpty) {
       return Container(
@@ -238,7 +237,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     );
   }
 
-  Widget _buildDietCard(Diet diet) {
+  Widget _buildDietCard(UserDiet diet) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -263,7 +262,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     );
   }
 
-  void _showDietDetails(BuildContext context, Diet diet) {
+  void _showDietDetails(BuildContext context, UserDiet diet) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -399,7 +398,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
     );
   }
 
-  void _showDietFoodsDialog(Diet diet) {
+  void _showDietFoodsDialog(UserDiet diet) {
     showDialog(
       context: context,
       builder: (context) {
@@ -437,66 +436,15 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Lista de alimentos de ejemplo
+                // Lista de alimentos reales
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCAD1D9),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFoodItem(
-                            "Alimento 1",
-                            "grams grams",
-                            "calories calories",
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "other_info other_info other_info\nother_info other_info other_info\nother_info other_info other_info\nother_info other_info other_info\nother_info other_info other_i",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: _UserDietFoodsWidget(diet: diet),
                 ),
               ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFoodItem(String name, String grams, String calories) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(grams, style: const TextStyle(fontSize: 14, color: Colors.black)),
-        const SizedBox(height: 2),
-        Text(
-          calories,
-          style: const TextStyle(fontSize: 14, color: Colors.black),
-        ),
-        const SizedBox(height: 12),
-      ],
     );
   }
 
@@ -539,6 +487,179 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _UserDietFoodsWidget extends StatefulWidget {
+  final UserDiet diet;
+
+  const _UserDietFoodsWidget({Key? key, required this.diet}) : super(key: key);
+
+  @override
+  _UserDietFoodsWidgetState createState() => _UserDietFoodsWidgetState();
+}
+
+class _UserDietFoodsWidgetState extends State<_UserDietFoodsWidget> {
+  List<Map<String, dynamic>> dietFoods = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDietFoods();
+  }
+
+  Future<void> _loadDietFoods() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      final foods = await DietService.fetchFoodsOfUserDiet(widget.diet.id);
+
+      setState(() {
+        dietFoods = foods ?? [];
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error al cargar alimentos: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
+        ),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
+            const SizedBox(height: 16),
+            Text(
+              errorMessage!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red[700]),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadDietFoods,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4CAF50),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (dietFoods.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.restaurant, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No hay alimentos en esta dieta',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tu nutricionista aún no ha agregado alimentos a esta dieta.',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFCAD1D9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListView.builder(
+        itemCount: dietFoods.length,
+        itemBuilder: (context, index) {
+          final dietFood = dietFoods[index];
+          final food = dietFood['food'];
+          
+          if (food == null) {
+            return Container();
+          }
+
+          final foodName = food['name']?.toString() ?? 'Alimento desconocido';
+          final foodGrams = food['grams']?.toString() ?? '0';
+          final foodCalories = food['calories']?.toString() ?? '0';
+          final foodOtherInfo = food['other_info']?.toString();
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  foodName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${foodGrams}g - ${foodCalories} cal',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (foodOtherInfo != null && foodOtherInfo.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    foodOtherInfo,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../network/NetworkService.dart';
 import '../interfaces/bussiness/diet_food_interface.dart';
+import '../interfaces/bussiness/user_diet_interface.dart';
 
 class DietService {
   static String get _baseUrl => dotenv.env['BUSINESS_BASE_URL'] ?? '';
 
   // Listar dietas del usuario autenticado
-  static Future<List<Map<String, dynamic>>?> fetchUserDiets() async {
+  static Future<List<UserDiet>?> fetchUserDiets() async {
     try {
       final fullUrl = '$_baseUrl/user_diet';
       print('=== USER DIET SERVICE DEBUG ===');
@@ -27,8 +28,25 @@ class DietService {
         print('Lista de dietas de usuario extraída: $data');
         print('Cantidad de dietas: ${data.length}');
 
-        final result = data.map((e) => Map<String, dynamic>.from(e)).toList();
-        print('Resultado final: $result');
+        // Procesar cada elemento individualmente con logging detallado
+        final List<UserDiet> result = [];
+        for (int i = 0; i < data.length; i++) {
+          try {
+            print('Procesando dieta de usuario $i: ${data[i]}');
+            print('Tipo del elemento $i: ${data[i].runtimeType}');
+            final userDiet = UserDiet.fromJson(data[i]);
+            result.add(userDiet);
+            print(
+              'Dieta de usuario $i convertida exitosamente: ${userDiet.name}',
+            );
+          } catch (e) {
+            print('Error al convertir dieta de usuario $i: $e');
+            print('Datos del elemento problemático: ${data[i]}');
+            // Continúa con las otras dietas en lugar de fallar completamente
+          }
+        }
+
+        print('Resultado final: ${result.length} dietas de usuario cargadas');
         return result;
       } else {
         print('Error en respuesta - Status: ${response.statusCode}');
@@ -137,27 +155,27 @@ class DietService {
     try {
       final fullUrl = '$_baseUrl/diets/$dietId/foods';
       final body = {'food_ids': foodIds};
-      
+
       print('=== ADD FOODS TO DIET DEBUG ===');
       print('URL: $fullUrl');
       print('Body enviado: $body');
       print('Diet ID: $dietId');
       print('Food IDs: $foodIds');
-      
+
       final response = await NetworkService.post(fullUrl, body: body);
-      
+
       print('Status code de respuesta: ${response.statusCode}');
       print('Headers de respuesta: ${response.headers}');
       print('Cuerpo de respuesta: ${response.body}');
-      
+
       if (response.statusCode == 201) {
         final responseData = json.decode(response.body);
         print('Datos decodificados: $responseData');
-        
+
         final data = responseData['data'] as List;
         print('Lista de datos extraída: $data');
         print('Cantidad de elementos: ${data.length}');
-        
+
         // Procesar cada elemento individualmente con logging detallado
         final List<DietFood> result = [];
         for (int i = 0; i < data.length; i++) {
@@ -173,7 +191,7 @@ class DietService {
             rethrow;
           }
         }
-        
+
         print('Resultado final convertido: $result');
         return result;
       } else {
@@ -196,30 +214,30 @@ class DietService {
   ) async {
     try {
       final fullUrl = '$_baseUrl/diets/$dietId/foods';
-      
+
       print('=== FETCH FOODS OF DIET DEBUG ===');
       print('URL: $fullUrl');
       print('Diet ID: $dietId');
-      
+
       final response = await NetworkService.get(fullUrl);
-      
+
       print('Status code de respuesta: ${response.statusCode}');
       print('Headers de respuesta: ${response.headers}');
       print('Cuerpo de respuesta: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         print('Datos decodificados: $responseData');
-        
+
         final data = responseData['data'] as List;
         print('Lista de datos extraída: $data');
         print('Cantidad de elementos: ${data.length}');
-        
+
         for (int i = 0; i < data.length; i++) {
           print('Elemento $i: ${data[i]}');
           print('Tipo del elemento $i: ${data[i].runtimeType}');
         }
-        
+
         final result = data.map((e) => Map<String, dynamic>.from(e)).toList();
         print('Resultado final convertido: $result');
         return result;
@@ -230,6 +248,53 @@ class DietService {
       }
     } catch (e) {
       print('=== ERROR EN FETCH FOODS OF DIET ===');
+      print('Excepción capturada: $e');
+      print('Tipo de excepción: ${e.runtimeType}');
+      print('Stack trace: $e');
+      return null;
+    }
+  }
+
+  // Listar alimentos de una dieta de usuario
+  static Future<List<Map<String, dynamic>>?> fetchFoodsOfUserDiet(
+    int dietId,
+  ) async {
+    try {
+      final fullUrl = '$_baseUrl/diets/$dietId/foods';
+
+      print('=== FETCH FOODS OF USER DIET DEBUG ===');
+      print('URL: $fullUrl');
+      print('Diet ID: $dietId');
+
+      final response = await NetworkService.get(fullUrl);
+
+      print('Status code de respuesta: ${response.statusCode}');
+      print('Headers de respuesta: ${response.headers}');
+      print('Cuerpo de respuesta: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Datos decodificados: $responseData');
+
+        final data = responseData['data'] as List;
+        print('Lista de datos extraída: $data');
+        print('Cantidad de elementos: ${data.length}');
+
+        for (int i = 0; i < data.length; i++) {
+          print('Elemento $i: ${data[i]}');
+          print('Tipo del elemento $i: ${data[i].runtimeType}');
+        }
+
+        final result = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        print('Resultado final convertido: $result');
+        return result;
+      } else {
+        print('Error en respuesta - Status: ${response.statusCode}');
+        print('Mensaje de error: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('=== ERROR EN FETCH FOODS OF USER DIET ===');
       print('Excepción capturada: $e');
       print('Tipo de excepción: ${e.runtimeType}');
       print('Stack trace: $e');
