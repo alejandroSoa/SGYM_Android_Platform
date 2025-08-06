@@ -359,7 +359,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final today = DateTime.now();
     final todayString =
         '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final currentTime = '${today.hour.toString().padLeft(2, '0')}:${today.minute.toString().padLeft(2, '0')}';
+    
     print('Fecha actual: $todayString');
+    print('Hora actual: $currentTime');
     print('Total de citas disponibles: ${userAppointments.length}');
 
     // Mostrar todas las citas disponibles
@@ -370,30 +373,49 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    // Filtrar citas del día actual
     final todayAppointments = userAppointments.where((appointment) {
-      print('Comparando: "${appointment.date}" == "$todayString"');
+      print('Comparando fecha: "${appointment.date}" == "$todayString"');
       return appointment.date == todayString;
     }).toList();
 
     print('Citas encontradas para hoy: ${todayAppointments.length}');
 
+    // Filtrar citas que aún no han pasado (hora >= hora actual)
+    final upcomingAppointments = todayAppointments.where((appointment) {
+      final appointmentTime = appointment.startTime.substring(0, 5); // "10:00:00" -> "10:00"
+      final isUpcoming = appointmentTime.compareTo(currentTime) >= 0;
+      print('Comparando hora: "$appointmentTime" >= "$currentTime" = $isUpcoming');
+      return isUpcoming;
+    }).toList();
+
+    // Ordenar por hora para obtener la más próxima
+    upcomingAppointments.sort((a, b) {
+      final timeA = a.startTime.substring(0, 5);
+      final timeB = b.startTime.substring(0, 5);
+      return timeA.compareTo(timeB);
+    });
+
+    print('Citas próximas ordenadas: ${upcomingAppointments.length}');
+
     setState(() {
-      if (todayAppointments.isNotEmpty) {
-        final appointment = todayAppointments.first;
+      if (upcomingAppointments.isNotEmpty) {
+        final appointment = upcomingAppointments.first;
         // Formatear la hora para mostrar solo hora:minutos
-        final startTime = appointment.startTime.substring(
-          0,
-          5,
-        ); // "10:00:00" -> "10:00"
+        final startTime = appointment.startTime.substring(0, 5); // "10:00:00" -> "10:00"
 
         // Determinar el tipo de cita y mostrar información relevante
         final appointmentTypeText = appointment.type == 'trainer'
             ? 'Entrenador'
             : 'Nutriólogo';
-        todayAppointmentText = 'Cita con $appointmentTypeText a las $startTime';
+        todayAppointmentText = 'Próxima cita con $appointmentTypeText a las $startTime';
         print(
-          'Cita seleccionada: $todayAppointmentText (Tipo: ${appointment.type})',
+          'Cita próxima seleccionada: $todayAppointmentText (Tipo: ${appointment.type})',
         );
+      } else if (todayAppointments.isNotEmpty) {
+        // Si hay citas del día pero todas ya pasaron
+        todayAppointmentText = 'Todas las citas de hoy ya han pasado';
+        print('Todas las citas del día ya han pasado');
       } else {
         todayAppointmentText = 'Sin citas para hoy';
         print('No se encontró cita para el día: $todayString');
