@@ -188,7 +188,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   void _showCreateTrainerAppointmentForm(BuildContext context) {
-    final TextEditingController trainerIdController = TextEditingController();
     DateTime? selectedDate;
     TimeOfDay? startTime;
     TimeOfDay? endTime;
@@ -205,16 +204,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: trainerIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'ID del Entrenador',
-                        hintText: 'Ejemplo: 1',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-
                     // Selector de fecha
                     InkWell(
                       onTap: () async {
@@ -293,7 +282,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             const SizedBox(width: 12),
                             Text(
                               startTime != null
-                                  ? '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}:00'
+                                  ? '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}'
                                   : 'Hora de inicio',
                               style: TextStyle(
                                 color: startTime != null
@@ -337,7 +326,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             const SizedBox(width: 12),
                             Text(
                               endTime != null
-                                  ? '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}:00'
+                                  ? '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}'
                                   : 'Hora de fin',
                               style: TextStyle(
                                 color: endTime != null
@@ -394,8 +383,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 TextButton(
                   onPressed: () async {
                     // Validar que todos los campos estén completos
-                    if (trainerIdController.text.isEmpty ||
-                        selectedDate == null ||
+                    if (selectedDate == null ||
                         startTime == null ||
                         endTime == null) {
                       setState(() {
@@ -446,19 +434,23 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     final dateString =
                         '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
                     final startTimeString =
-                        '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}:00';
+                        '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}';
                     final endTimeString =
-                        '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}:00';
+                        '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}';
 
-                    await _createTrainerAppointment(
-                      trainerIdController.text,
+                    // Cerrar el diálogo actual
+                    Navigator.of(context).pop();
+                    
+                    // Buscar entrenadores disponibles
+                    await _searchAvailableStaff(
+                      context,
+                      'trainer',
                       dateString,
                       startTimeString,
                       endTimeString,
                     );
-                    Navigator.of(context).pop();
                   },
-                  child: const Text('Crear'),
+                  child: const Text('Buscar Disponibles'),
                 ),
               ],
             );
@@ -469,8 +461,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   void _showCreateNutritionistAppointmentForm(BuildContext context) {
-    final TextEditingController nutritionistIdController =
-        TextEditingController();
     DateTime? selectedDate;
     TimeOfDay? startTime;
     TimeOfDay? endTime;
@@ -487,16 +477,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: nutritionistIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'ID del Nutriólogo',
-                        hintText: 'Ejemplo: 1',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-
                     // Selector de fecha
                     InkWell(
                       onTap: () async {
@@ -575,7 +555,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             const SizedBox(width: 12),
                             Text(
                               startTime != null
-                                  ? '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}:00'
+                                  ? '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}'
                                   : 'Hora de inicio',
                               style: TextStyle(
                                 color: startTime != null
@@ -619,7 +599,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                             const SizedBox(width: 12),
                             Text(
                               endTime != null
-                                  ? '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}:00'
+                                  ? '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}'
                                   : 'Hora de fin',
                               style: TextStyle(
                                 color: endTime != null
@@ -676,8 +656,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 TextButton(
                   onPressed: () async {
                     // Validar que todos los campos estén completos
-                    if (nutritionistIdController.text.isEmpty ||
-                        selectedDate == null ||
+                    if (selectedDate == null ||
                         startTime == null ||
                         endTime == null) {
                       setState(() {
@@ -728,19 +707,23 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     final dateString =
                         '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
                     final startTimeString =
-                        '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}:00';
+                        '${startTime!.hour.toString().padLeft(2, '0')}:${startTime!.minute.toString().padLeft(2, '0')}';
                     final endTimeString =
-                        '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}:00';
+                        '${endTime!.hour.toString().padLeft(2, '0')}:${endTime!.minute.toString().padLeft(2, '0')}';
 
-                    await _createNutritionistAppointment(
-                      nutritionistIdController.text,
+                    // Cerrar el diálogo actual
+                    Navigator.of(context).pop();
+                    
+                    // Buscar nutriólogos disponibles
+                    await _searchAvailableStaff(
+                      context,
+                      'nutritionist',
                       dateString,
                       startTimeString,
                       endTimeString,
                     );
-                    Navigator.of(context).pop();
                   },
-                  child: const Text('Crear'),
+                  child: const Text('Buscar Disponibles'),
                 ),
               ],
             );
@@ -750,136 +733,341 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  Future<void> _createTrainerAppointment(
-    String trainerId,
+  // Método para buscar personal disponible y mostrar diálogo de selección
+  Future<void> _searchAvailableStaff(
+    BuildContext context,
+    String role,
     String date,
     String startTime,
     String endTime,
   ) async {
     try {
-      // Obtener el usuario actual para el userId
-      final user = await UserService.getUser();
-      if (user == null || user['id'] == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: No se pudo obtener el usuario actual'),
-          ),
-        );
-        return;
-      }
+      print('=== BÚSQUEDA DE PERSONAL DISPONIBLE ===');
+      print('Role: $role');
+      print('Date: $date');
+      print('Start time: $startTime');
+      print('End time: $endTime');
 
-      final userId = user['id'];
-      final trainerIdInt = int.tryParse(trainerId);
+      // Mostrar loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
 
-      if (trainerIdInt == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: ID del entrenador inválido')),
-        );
-        return;
-      }
-
-      print('=== CREANDO CITA CON ENTRENADOR ===');
-      print('Usuario ID: $userId');
-      print('Entrenador ID: $trainerIdInt');
-      print('Fecha: $date');
-      print('Hora inicio: $startTime');
-      print('Hora fin: $endTime');
-
-      final result = await AppointmentService.createTrainerAppointment(
-        userId: userId,
-        trainerId: trainerIdInt,
+      // Hacer la petición a la API
+      final availableStaff = await AppointmentService.getAvailableStaff(
+        role: role,
         date: date,
         startTime: startTime,
         endTime: endTime,
       );
 
-      if (result != null) {
+      // Cerrar loading
+      Navigator.of(context).pop();
+
+      if (availableStaff == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Cita con entrenador creada exitosamente'),
+            content: Text('Error al buscar personal disponible'),
+            backgroundColor: Colors.red,
           ),
         );
-        // Recargar las citas
-        _loadAppointments();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al crear la cita con entrenador'),
-          ),
-        );
+        return;
       }
-    } catch (e) {
-      print('Error al crear cita con entrenador: $e');
-      ScaffoldMessenger.of(
+
+      if (availableStaff.isEmpty) {
+        // No hay personal disponible
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('No hay ${role == 'trainer' ? 'entrenadores' : 'nutriólogos'} disponibles'),
+            content: Text(
+              'No se encontraron ${role == 'trainer' ? 'entrenadores' : 'nutriólogos'} disponibles para el horario seleccionado. '
+              'Por favor intenta con otro horario.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      // Mostrar lista de personal disponible
+      _showAvailableStaffDialog(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        role,
+        availableStaff,
+        date,
+        startTime,
+        endTime,
+      );
+    } catch (e) {
+      // Cerrar loading si está abierto
+      Navigator.of(context).pop();
+      
+      print('Error buscando personal disponible: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
-  Future<void> _createNutritionistAppointment(
-    String nutritionistId,
+  // Método para mostrar diálogo con personal disponible
+  void _showAvailableStaffDialog(
+    BuildContext context,
+    String role,
+    List<Map<String, dynamic>> availableStaff,
+    String date,
+    String startTime,
+    String endTime,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${role == 'trainer' ? 'Entrenadores' : 'Nutriólogos'} Disponibles'),
+        content: Container(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: availableStaff.length,
+            itemBuilder: (context, index) {
+              final staff = availableStaff[index];
+              final staffId = staff['id'];
+
+              return FutureBuilder<String>(
+                future: _getStaffName(staffId),
+                builder: (context, snapshot) {
+                  String staffName = 'Cargando...';
+                  
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      staffName = snapshot.data!;
+                    } else {
+                      staffName = 'Usuario ID: $staffId';
+                    }
+                  }
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: role == 'trainer' ? Colors.orange : Colors.green,
+                      child: Icon(
+                        role == 'trainer' ? Icons.fitness_center : Icons.restaurant,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(staffName),
+                    onTap: snapshot.connectionState == ConnectionState.done ? () {
+                      Navigator.of(context).pop();
+                      _confirmAppointmentCreation(
+                        context,
+                        role,
+                        staffId,
+                        staffName,
+                        date,
+                        startTime,
+                        endTime,
+                      );
+                    } : null, // Deshabilitar tap mientras carga
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Método para obtener el nombre del personal usando ProfileService
+  Future<String> _getStaffName(int staffId) async {
+    try {
+      final profile = await ProfileService.fetchProfileById(staffId);
+      return profile?.fullName ?? 'Usuario ID: $staffId';
+    } catch (e) {
+      print('Error obteniendo nombre del personal $staffId: $e');
+      return 'Usuario ID: $staffId';
+    }
+  }
+
+  // Método para confirmar creación de cita
+  void _confirmAppointmentCreation(
+    BuildContext context,
+    String role,
+    int staffId,
+    String staffName,
+    String date,
+    String startTime,
+    String endTime,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar Cita'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('¿Confirmas la creación de la cita?'),
+            const SizedBox(height: 16),
+            Text('${role == 'trainer' ? 'Entrenador' : 'Nutriólogo'}: $staffName'),
+            Text('Fecha: $date'),
+            Text('Hora: $startTime - $endTime'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _createAppointmentWithStaff(
+                context,
+                role,
+                staffId,
+                date,
+                startTime,
+                endTime,
+              );
+            },
+            child: const Text('Crear Cita'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Método para crear la cita con el personal seleccionado
+  Future<void> _createAppointmentWithStaff(
+    BuildContext context,
+    String role,
+    int staffId,
     String date,
     String startTime,
     String endTime,
   ) async {
     try {
-      // Obtener el usuario actual para el userId
+      // Obtener el usuario actual
       final user = await UserService.getUser();
       if (user == null || user['id'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error: No se pudo obtener el usuario actual'),
+            backgroundColor: Colors.red,
           ),
         );
         return;
       }
 
       final userId = user['id'];
-      final nutritionistIdInt = int.tryParse(nutritionistId);
 
-      if (nutritionistIdInt == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: ID del nutriólogo inválido')),
-        );
-        return;
-      }
-
-      print('=== CREANDO CITA CON NUTRIÓLOGO ===');
+      print('=== CREANDO CITA ===');
       print('Usuario ID: $userId');
-      print('Nutriólogo ID: $nutritionistIdInt');
+      print('${role == 'trainer' ? 'Entrenador' : 'Nutriólogo'} ID: $staffId');
       print('Fecha: $date');
-      print('Hora inicio: $startTime');
-      print('Hora fin: $endTime');
+      
+      // Asegurar formato correcto de horas HH:MM:SS
+      final formattedStartTime = _formatTimeForAPI(startTime);
+      final formattedEndTime = _formatTimeForAPI(endTime);
+      
+      print('Hora inicio: $formattedStartTime');
+      print('Hora fin: $formattedEndTime');
 
-      final result = await AppointmentService.createNutritionistAppointment(
-        userId: userId,
-        nutritionistId: nutritionistIdInt,
-        date: date,
-        startTime: startTime,
-        endTime: endTime,
-      );
+      dynamic result;
+      if (role == 'trainer') {
+        result = await AppointmentService.createTrainerAppointment(
+          userId: userId,
+          trainerId: staffId,
+          date: date,
+          startTime: formattedStartTime,
+          endTime: formattedEndTime,
+        );
+      } else {
+        result = await AppointmentService.createNutritionistAppointment(
+          userId: userId,
+          nutritionistId: staffId,
+          date: date,
+          startTime: formattedStartTime,
+          endTime: formattedEndTime,
+        );
+      }
 
       if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cita con nutriólogo creada exitosamente'),
+          SnackBar(
+            content: Text(
+              'Cita con ${role == 'trainer' ? 'entrenador' : 'nutriólogo'} creada exitosamente',
+            ),
+            backgroundColor: Colors.green,
           ),
         );
         // Recargar las citas
         _loadAppointments();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al crear la cita con nutriólogo'),
+          SnackBar(
+            content: Text(
+              'Error al crear la cita con ${role == 'trainer' ? 'entrenador' : 'nutriólogo'}',
+            ),
+            backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      print('Error al crear cita con nutriólogo: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      print('Error al crear cita: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
+  }
+
+  // Método para formatear hora en formato API (HH:MM)
+  String _formatTimeForAPI(String time) {
+    // Si ya está en formato HH:MM, devolverlo tal como está
+    if (time.split(':').length == 2) {
+      return time;
+    }
+    
+    // Si tiene segundos (HH:MM:SS), eliminar los segundos
+    if (time.split(':').length == 3) {
+      final timeParts = time.split(':');
+      return '${timeParts[0]}:${timeParts[1]}';
+    }
+    
+    // Fallback: intentar parsear y formatear sin segundos
+    try {
+      final timeParts = time.split(':');
+      if (timeParts.length >= 2) {
+        final hour = timeParts[0].padLeft(2, '0');
+        final minute = timeParts[1].padLeft(2, '0');
+        return '$hour:$minute';
+      }
+    } catch (e) {
+      print('Error formateando hora $time: $e');
+    }
+    
+    // Si todo falla, devolver la hora original
+    return time;
   }
 
   @override

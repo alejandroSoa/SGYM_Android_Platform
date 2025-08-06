@@ -331,4 +331,51 @@ class AppointmentService {
       rethrow;
     }
   }
+
+  // Obtener personal disponible para una cita
+  static Future<List<Map<String, dynamic>>?> getAvailableStaff({
+    required String role,
+    required String date,
+    required String startTime,
+    required String endTime,
+  }) async {
+    try {
+      final url =
+          '$_baseUrl/available-staff?role=$role&date=$date&start_time=$startTime&end_time=$endTime';
+
+      print('=== GET AVAILABLE STAFF SERVICE DEBUG ===');
+      print('URL de consulta: $url');
+      print('Role: $role');
+      print('Date: $date');
+      print('Start time: $startTime');
+      print('End time: $endTime');
+
+      final response = await NetworkService.get(url);
+
+      print('Status code de respuesta: ${response.statusCode}');
+      print('Headers de respuesta: ${response.headers}');
+      print('Cuerpo de respuesta: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('Datos decodificados: $responseData');
+
+        final data = responseData['data'] as List;
+        print('Personal disponible: ${data.length}');
+
+        final result = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        print('Resultado final: $result');
+        return result;
+      } else {
+        print('Error en respuesta - Status: ${response.statusCode}');
+        print('Mensaje de error: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('=== ERROR EN GET AVAILABLE STAFF SERVICE ===');
+      print('Excepción capturada: $e');
+      print('Tipo de excepción: ${e.runtimeType}');
+      rethrow;
+    }
+  }
 }
