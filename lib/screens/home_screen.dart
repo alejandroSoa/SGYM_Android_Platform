@@ -6,6 +6,7 @@ import '../services/DietService.dart';
 import '../services/AppointmentService.dart';
 import '../services/GymStatusService.dart';
 import '../services/SharedPreferencesService.dart';
+import '../services/AuthService.dart';
 import '../interfaces/bussiness/routine_interface.dart';
 import '../interfaces/bussiness/appointment_interface.dart';
 import '../main.dart';
@@ -30,14 +31,33 @@ class _HomeScreenState extends State<HomeScreen> {
   String todayAppointmentText = 'Sin citas para hoy';
   String gymOccupancyText = 'Cargando ocupación...';
   bool isLoadingOccupancy = false;
+  int? userRole;
+  bool isLoadingUser = true;
 
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     _loadUserRoutines();
     _loadUserDiets();
     _loadUserAppointments();
     _loadGymOccupancy();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final roleId = await AuthService.getCurrentUserRole();
+      setState(() {
+        userRole = roleId;
+        isLoadingUser = false;
+      });
+      print('=== DEBUG USER: Rol del usuario cargado: $userRole ===');
+    } catch (e) {
+      print('=== DEBUG USER: Error al cargar rol del usuario: $e ===');
+      setState(() {
+        isLoadingUser = false;
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -555,42 +575,45 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
 
-            DailyActivity(
-              rutinaPrincipal: todayRoutineName,
-              dietaPrincipal: todayDietName,
-              citaPrincipal: todayAppointmentText,
-              onRutinaTap: () {
-                final mainLayoutState = context
-                    .findAncestorStateOfType<State<MainLayout>>();
-                if (mainLayoutState != null) {
-                  (mainLayoutState as dynamic).setState(() {
-                    (mainLayoutState as dynamic).currentIndex =
-                        3; // Pestaña de Rutinas
-                  });
-                }
-              },
-              onDietaTap: () {
-                final mainLayoutState = context
-                    .findAncestorStateOfType<State<MainLayout>>();
-                if (mainLayoutState != null) {
-                  (mainLayoutState as dynamic).setState(() {
-                    (mainLayoutState as dynamic).currentIndex =
-                        2; // Pestaña de Dietas
-                  });
-                }
-              },
-              onCitasTap: () {
-                final mainLayoutState = context
-                    .findAncestorStateOfType<State<MainLayout>>();
-                if (mainLayoutState != null) {
-                  (mainLayoutState as dynamic).setState(() {
-                    (mainLayoutState as dynamic).currentIndex =
-                        1; // Pestaña de Citas
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 12),
+            // Mostrar DailyActivity solo si el usuario tiene rol = 5
+            if (!isLoadingUser && userRole == 5) ...[
+              DailyActivity(
+                rutinaPrincipal: todayRoutineName,
+                dietaPrincipal: todayDietName,
+                citaPrincipal: todayAppointmentText,
+                onRutinaTap: () {
+                  final mainLayoutState = context
+                      .findAncestorStateOfType<State<MainLayout>>();
+                  if (mainLayoutState != null) {
+                    (mainLayoutState as dynamic).setState(() {
+                      (mainLayoutState as dynamic).currentIndex =
+                          3; // Pestaña de Rutinas
+                    });
+                  }
+                },
+                onDietaTap: () {
+                  final mainLayoutState = context
+                      .findAncestorStateOfType<State<MainLayout>>();
+                  if (mainLayoutState != null) {
+                    (mainLayoutState as dynamic).setState(() {
+                      (mainLayoutState as dynamic).currentIndex =
+                          2; // Pestaña de Dietas
+                    });
+                  }
+                },
+                onCitasTap: () {
+                  final mainLayoutState = context
+                      .findAncestorStateOfType<State<MainLayout>>();
+                  if (mainLayoutState != null) {
+                    (mainLayoutState as dynamic).setState(() {
+                      (mainLayoutState as dynamic).currentIndex =
+                          1; // Pestaña de Citas
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
         ),
       ),
