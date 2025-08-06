@@ -32,7 +32,11 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
+            view: NotificationsScreen(
+              onNotificationChanged: onNotificationChanged,
+              onBack: onBack,
+            ),
+            showTopBar: false,
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,
@@ -60,7 +64,11 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
+            view: NotificationsScreen(
+              onNotificationChanged: onNotificationChanged,
+              onBack: onBack,
+            ),
+            showTopBar: false,
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,
@@ -81,7 +89,11 @@ class RoleConfigService {
             showNotificationIcon: false,
           ),
           Screenconfig(
-            view: NotificationsScreen(onNotificationChanged: onNotificationChanged),
+            view: NotificationsScreen(
+              onNotificationChanged: onNotificationChanged,
+              onBack: onBack,
+            ),
+            showTopBar: false,
             showBackButton: true,
             showBottomNav: false,
             showProfileIcon: false,

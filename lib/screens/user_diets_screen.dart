@@ -437,9 +437,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                 const SizedBox(height: 16),
 
                 // Lista de alimentos reales
-                Expanded(
-                  child: _UserDietFoodsWidget(diet: diet),
-                ),
+                Expanded(child: _UserDietFoodsWidget(diet: diet)),
               ],
             ),
           ),
@@ -467,7 +465,7 @@ class _UserDietsScreenState extends State<UserDietsScreen> {
                   ),
                   const Expanded(
                     child: Text(
-                      'Dietas',
+                      'Mis Dietas',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -608,7 +606,7 @@ class _UserDietFoodsWidgetState extends State<_UserDietFoodsWidget> {
         itemBuilder: (context, index) {
           final dietFood = dietFoods[index];
           final food = dietFood['food'];
-          
+
           if (food == null) {
             return Container();
           }

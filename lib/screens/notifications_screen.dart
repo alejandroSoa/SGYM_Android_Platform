@@ -4,8 +4,13 @@ import '../services/LocalNotificationService.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final VoidCallback? onNotificationChanged;
+  final VoidCallback? onBack;
 
-  const NotificationsScreen({super.key, this.onNotificationChanged});
+  const NotificationsScreen({
+    super.key, 
+    this.onNotificationChanged,
+    this.onBack,
+  });
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -116,7 +121,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Todas las notificaciones eliminadas'),
-            backgroundColor: Colors.orange,
+            backgroundColor: Colors.green,
           ),
         );
       }
@@ -144,12 +149,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Notificaciones'),
-        backgroundColor: const Color(0xFF6366F1),
-        foregroundColor: Colors.white,
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
         elevation: 0,
+        toolbarHeight: 70,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () {
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else {
+              Navigator.of(context).canPop() ? Navigator.pop(context) : null;
+            }
+          },
+        ),
         actions: [
           if (notifications.isNotEmpty) ...[
             PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
               onSelected: (value) {
                 switch (value) {
                   case 'mark_all_read':
@@ -259,17 +277,14 @@ class _NotificationCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: notification.isRead ? Colors.white : const Color(0xFFF0F0FF),
+        color: notification.isRead ? Colors.white : Colors.blue.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: notification.isRead
-              ? Colors.grey[300]!
-              : const Color(0xFF6366F1).withOpacity(0.3),
-          width: notification.isRead ? 1 : 2,
-        ),
+        border: notification.isRead 
+            ? null 
+            : Border.all(color: Colors.blue.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(notification.isRead ? 0.05 : 0.08),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -298,65 +313,89 @@ class _NotificationCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Indicador de no leída
-                Container(
-                  width: 12,
-                  height: 12,
-                  margin: const EdgeInsets.only(top: 4, right: 12),
-                  decoration: BoxDecoration(
-                    color: notification.isRead
-                        ? Colors.transparent
-                        : const Color(0xFF6366F1),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-
                 // Ícono de notificación
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.notifications,
-                    color: const Color(0xFF6366F1),
-                    size: 20,
-                  ),
+                Stack(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFB19CD9).withOpacity(0.7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    // Punto indicador para notificaciones no leídas
+                    if (!notification.isRead)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
                 // Contenido de la notificación
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        notification.title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: notification.isRead
-                              ? FontWeight.w500
-                              : FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        notification.body,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          height: 1.3,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        timeAgo,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  notification.title,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                if (notification.body.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    notification.body,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.black87,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            timeAgo,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
