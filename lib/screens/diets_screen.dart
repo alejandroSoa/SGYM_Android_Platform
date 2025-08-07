@@ -510,6 +510,26 @@ class _DietsScreenState extends State<DietsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
+                  // Mostrar descripción solo si existe
+                  if (diet.description != null &&
+                      diet.description!.isNotEmpty) ...[
+                    const Text(
+                      'Descripción',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      diet.description!,
+                      style: const TextStyle(fontSize: 16, height: 1.5),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -571,6 +591,7 @@ class _DietsScreenState extends State<DietsScreen> {
     final caloriesController = TextEditingController();
     final otherInfoController = TextEditingController();
     bool isCreating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
@@ -599,6 +620,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.restaurant),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -611,6 +638,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.monitor_weight),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -623,6 +656,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.local_fire_department),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -637,6 +676,38 @@ class _DietsScreenState extends State<DietsScreen> {
                         hintText: 'Información nutricional adicional...',
                       ),
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -649,35 +720,62 @@ class _DietsScreenState extends State<DietsScreen> {
                   onPressed: isCreating
                       ? null
                       : () async {
-                          if (nameController.text.trim().isEmpty ||
-                              gramsController.text.trim().isEmpty ||
-                              caloriesController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Todos los campos son obligatorios excepto información adicional',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                          // Validar que los campos obligatorios estén completos
+                          if (nameController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre del alimento es obligatorio';
+                            });
                             return;
                           }
 
+                          if (gramsController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'Los gramos son obligatorios';
+                            });
+                            return;
+                          }
+
+                          if (caloriesController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'Las calorías son obligatorias';
+                            });
+                            return;
+                          }
+
+                          // Validar que gramos y calorías sean números válidos
+                          final grams = double.tryParse(
+                            gramsController.text.trim(),
+                          );
+                          if (grams == null || grams <= 0) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'Los gramos deben ser un número válido mayor que 0';
+                            });
+                            return;
+                          }
+
+                          final calories = double.tryParse(
+                            caloriesController.text.trim(),
+                          );
+                          if (calories == null || calories <= 0) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'Las calorías deben ser un número válido mayor que 0';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
                           setDialogState(() {
+                            errorMessage = null;
                             isCreating = true;
                           });
 
                           await _createFood(
                             name: nameController.text.trim(),
-                            grams:
-                                double.tryParse(gramsController.text.trim()) ??
-                                0,
-                            calories:
-                                double.tryParse(
-                                  caloriesController.text.trim(),
-                                ) ??
-                                0,
+                            grams: grams,
+                            calories: calories,
                             otherInfo: otherInfoController.text.trim().isEmpty
                                 ? null
                                 : otherInfoController.text.trim(),
@@ -720,6 +818,7 @@ class _DietsScreenState extends State<DietsScreen> {
       text: food.otherInfo ?? '',
     );
     bool isUpdating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
@@ -748,6 +847,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.restaurant),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -760,6 +865,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.monitor_weight),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -772,6 +883,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.local_fire_department),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -786,6 +903,38 @@ class _DietsScreenState extends State<DietsScreen> {
                         hintText: 'Información nutricional adicional...',
                       ),
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -798,36 +947,63 @@ class _DietsScreenState extends State<DietsScreen> {
                   onPressed: isUpdating
                       ? null
                       : () async {
-                          if (nameController.text.trim().isEmpty ||
-                              gramsController.text.trim().isEmpty ||
-                              caloriesController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Todos los campos son obligatorios excepto información adicional',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                          // Validar que los campos obligatorios estén completos
+                          if (nameController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre del alimento es obligatorio';
+                            });
                             return;
                           }
 
+                          if (gramsController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'Los gramos son obligatorios';
+                            });
+                            return;
+                          }
+
+                          if (caloriesController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'Las calorías son obligatorias';
+                            });
+                            return;
+                          }
+
+                          // Validar que gramos y calorías sean números válidos
+                          final grams = double.tryParse(
+                            gramsController.text.trim(),
+                          );
+                          if (grams == null || grams <= 0) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'Los gramos deben ser un número válido mayor que 0';
+                            });
+                            return;
+                          }
+
+                          final calories = double.tryParse(
+                            caloriesController.text.trim(),
+                          );
+                          if (calories == null || calories <= 0) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'Las calorías deben ser un número válido mayor que 0';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
                           setDialogState(() {
+                            errorMessage = null;
                             isUpdating = true;
                           });
 
                           await _updateFood(
                             id: food.id,
                             name: nameController.text.trim(),
-                            grams:
-                                double.tryParse(gramsController.text.trim()) ??
-                                0,
-                            calories:
-                                double.tryParse(
-                                  caloriesController.text.trim(),
-                                ) ??
-                                0,
+                            grams: grams,
+                            calories: calories,
                             otherInfo: otherInfoController.text.trim().isEmpty
                                 ? null
                                 : otherInfoController.text.trim(),
@@ -934,6 +1110,7 @@ class _DietsScreenState extends State<DietsScreen> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     bool isCreating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
@@ -962,6 +1139,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.restaurant_menu),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -976,6 +1159,38 @@ class _DietsScreenState extends State<DietsScreen> {
                         hintText: 'Describe la dieta...',
                       ),
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -988,20 +1203,27 @@ class _DietsScreenState extends State<DietsScreen> {
                   onPressed: isCreating
                       ? null
                       : () async {
+                          // Validar que el nombre esté presente
                           if (nameController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'El nombre de la dieta es obligatorio',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre de la dieta es obligatorio';
+                            });
                             return;
                           }
 
+                          // Validar que el nombre tenga al menos 3 caracteres
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre de la dieta debe tener al menos 3 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
                           setDialogState(() {
+                            errorMessage = null;
                             isCreating = true;
                           });
 
@@ -1046,6 +1268,7 @@ class _DietsScreenState extends State<DietsScreen> {
       text: diet.description ?? '',
     );
     bool isUpdating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
@@ -1074,6 +1297,12 @@ class _DietsScreenState extends State<DietsScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.restaurant_menu),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -1088,6 +1317,38 @@ class _DietsScreenState extends State<DietsScreen> {
                         hintText: 'Describe la dieta...',
                       ),
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1100,20 +1361,27 @@ class _DietsScreenState extends State<DietsScreen> {
                   onPressed: isUpdating
                       ? null
                       : () async {
+                          // Validar que el nombre esté presente
                           if (nameController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'El nombre de la dieta es obligatorio',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre de la dieta es obligatorio';
+                            });
                             return;
                           }
 
+                          // Validar que el nombre tenga al menos 3 caracteres
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage =
+                                  'El nombre de la dieta debe tener al menos 3 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
                           setDialogState(() {
+                            errorMessage = null;
                             isUpdating = true;
                           });
 
@@ -1239,7 +1507,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Dieta "$name" creada exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1272,7 +1540,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$dietName eliminada exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1313,7 +1581,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Dieta "$name" actualizada exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1358,7 +1626,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Alimento "$name" creado exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1403,7 +1671,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Alimento "$name" actualizado exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1435,7 +1703,7 @@ class _DietsScreenState extends State<DietsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$foodName eliminado exitosamente'),
-            backgroundColor: Colors.grey[600],
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
         );
