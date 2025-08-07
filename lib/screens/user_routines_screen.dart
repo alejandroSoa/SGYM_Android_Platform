@@ -591,15 +591,75 @@ class _UserRoutineExercisesViewerState
   // Abrir video de YouTube
   Future<void> _openYouTubeVideo(String videoUrl) async {
     try {
+      print('Intentando abrir URL: $videoUrl');
+      
+      // Validar que la URL sea válida
+      if (videoUrl.isEmpty) {
+        _showErrorDialog('URL vacía', 'No hay URL de video disponible');
+        return;
+      }
+      
       final Uri url = Uri.parse(videoUrl);
+      print('URL parseada: $url');
+      
+      // Verificar si se puede abrir la URL
       if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
+        print('URL puede ser abierta, intentando lanzar...');
+        
+        // Intentar diferentes modos de lanzamiento
+        bool launched = false;
+        
+        // Primero intentar con aplicación externa (para abrir YouTube app si está disponible)
+        try {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+          launched = true;
+          print('URL abierta con aplicación externa exitosamente');
+        } catch (e) {
+          print('Error con aplicación externa: $e');
+        }
+        
+        // Si falló con aplicación externa, intentar con navegador
+        if (!launched) {
+          try {
+            await launchUrl(url, mode: LaunchMode.platformDefault);
+            launched = true;
+            print('URL abierta con navegador por defecto exitosamente');
+          } catch (e) {
+            print('Error con navegador por defecto: $e');
+          }
+        }
+        
+        // Si aún no se pudo abrir, mostrar error
+        if (!launched) {
+          _showErrorDialog('Error al abrir video', 'No se pudo abrir el video. Verifica que tengas instalada la aplicación de YouTube o un navegador web.');
+        }
       } else {
-        print('No se puede abrir la URL: $videoUrl');
+        print('No se puede abrir la URL: $videoUrl porque no se puede abrir');
+        _showErrorDialog('URL no compatible', 'No se encontró una aplicación compatible para abrir esta URL: $videoUrl');
       }
     } catch (e) {
       print('Error al abrir video de YouTube: $e');
+      _showErrorDialog('Error inesperado', 'Ocurrió un error al intentar abrir el video: $e');
     }
+  }
+  
+  // Mostrar diálogo de error
+  void _showErrorDialog(String title, String message) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
