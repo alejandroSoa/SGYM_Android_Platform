@@ -1534,8 +1534,53 @@ class _DietsScreenState extends State<DietsScreen> {
 
   Future<void> _deleteDiet(int dietId, String dietName) async {
     try {
+      print('=== INICIO ELIMINACIÓN DE DIETA ===');
+      print('ID de la dieta a eliminar: $dietId');
+      print('Nombre de la dieta: $dietName');
+
+      // Primero obtener todos los alimentos de la dieta
+      print('Paso 1: Obteniendo alimentos de la dieta...');
+      final dietFoods = await DietService.fetchFoodsOfDiet(dietId);
+      
+      if (dietFoods != null && dietFoods.isNotEmpty) {
+        print('Alimentos encontrados en la dieta: ${dietFoods.length}');
+        
+        // Eliminar cada alimento de la dieta antes de eliminar la dieta
+        for (int i = 0; i < dietFoods.length; i++) {
+          final dietFood = dietFoods[i];
+          final dietFoodId = dietFood['id']; // ID de la relación dieta-alimento
+          final foodName = dietFood['food']?['name'] ?? 'Alimento desconocido';
+          
+          print('Eliminando alimento ${i + 1}/${dietFoods.length}: $foodName (DietFood ID: $dietFoodId)');
+          
+          try {
+            final removeSuccess = await DietService.removeFoodFromDiet(
+              dietId: dietId,
+              dietFoodId: dietFoodId,
+            );
+            
+            if (removeSuccess) {
+              print('✓ Alimento "$foodName" eliminado exitosamente de la dieta');
+            } else {
+              print('✗ Error al eliminar el alimento "$foodName" de la dieta');
+            }
+          } catch (e) {
+            print('✗ Excepción al eliminar alimento "$foodName": $e');
+            // Continúa con el siguiente alimento en lugar de fallar completamente
+          }
+        }
+        
+        print('Paso 2: Todos los alimentos han sido procesados');
+      } else {
+        print('No se encontraron alimentos en la dieta o la consulta falló');
+      }
+
+      // Finalmente eliminar la dieta
+      print('Paso 3: Eliminando la dieta...');
       final success = await DietService.deleteDiet(dietId);
+      
       if (success) {
+        print('✓ Dieta eliminada exitosamente');
         await _loadDiets();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1545,6 +1590,7 @@ class _DietsScreenState extends State<DietsScreen> {
           ),
         );
       } else {
+        print('✗ Error al eliminar la dieta del servidor');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al eliminar la dieta'),
@@ -1554,6 +1600,11 @@ class _DietsScreenState extends State<DietsScreen> {
         );
       }
     } catch (e) {
+      print('=== ERROR GENERAL EN ELIMINACIÓN DE DIETA ===');
+      print('Excepción capturada: $e');
+      print('Tipo de excepción: ${e.runtimeType}');
+      print('Stack trace: $e');
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -1903,36 +1954,11 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
 
       if (dietFood != null) {
         await _loadDietFoods();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Alimento "${food.name}" agregado a la dieta'),
-              backgroundColor: Colors.grey[600],
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al agregar el alimento'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // Manejar error silenciosamente, solo recargar la información
+      print('Error al agregar alimento a la dieta: $e');
+      await _loadDietFoods();
     }
   }
 
@@ -1945,37 +1971,11 @@ class _DietFoodsManagerState extends State<_DietFoodsManager> {
 
       if (success) {
         await _loadDietFoods();
-        if (mounted) {
-          final food = dietFood['food']; // Access the nested food object
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Alimento "${food['name']}" eliminado de la dieta'),
-              backgroundColor: Colors.grey[600],
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar el alimento'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // Manejar error silenciosamente, solo recargar la información
+      print('Error al eliminar alimento de la dieta: $e');
+      await _loadDietFoods();
     }
   }
 
