@@ -392,6 +392,27 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       return;
                     }
 
+                    // Crear DateTime completo para la validación de anticipación
+                    final appointmentDateTime = DateTime(
+                      selectedDate!.year,
+                      selectedDate!.month,
+                      selectedDate!.day,
+                      startTime!.hour,
+                      startTime!.minute,
+                    );
+
+                    final now = DateTime.now();
+
+                    // Validar anticipación mínima de 2 horas
+                    final minAdvanceTime = now.add(const Duration(hours: 2));
+                    if (appointmentDateTime.isBefore(minAdvanceTime)) {
+                      setState(() {
+                        errorMessage =
+                            'Debes crear la cita con al menos 2 horas de anticipación';
+                      });
+                      return;
+                    }
+
                     // Validar duración máxima de 2 horas 30 minutos
                     final startDateTime = DateTime(
                       2023,
@@ -440,7 +461,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
                     // Cerrar el diálogo actual
                     Navigator.of(context).pop();
-                    
+
                     // Buscar entrenadores disponibles
                     await _searchAvailableStaff(
                       context,
@@ -450,7 +471,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       endTimeString,
                     );
                   },
-                  child: const Text('Buscar Disponibles'),
+                  child: const Text('Ver disponibilidad'),
                 ),
               ],
             );
@@ -665,6 +686,27 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       return;
                     }
 
+                    // Crear DateTime completo para la validación de anticipación
+                    final appointmentDateTime = DateTime(
+                      selectedDate!.year,
+                      selectedDate!.month,
+                      selectedDate!.day,
+                      startTime!.hour,
+                      startTime!.minute,
+                    );
+
+                    final now = DateTime.now();
+
+                    // Validar anticipación mínima de 2 horas
+                    final minAdvanceTime = now.add(const Duration(hours: 2));
+                    if (appointmentDateTime.isBefore(minAdvanceTime)) {
+                      setState(() {
+                        errorMessage =
+                            'Debes crear la cita con al menos 2 horas de anticipación';
+                      });
+                      return;
+                    }
+
                     // Validar duración máxima de 2 horas 30 minutos
                     final startDateTime = DateTime(
                       2023,
@@ -713,7 +755,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
                     // Cerrar el diálogo actual
                     Navigator.of(context).pop();
-                    
+
                     // Buscar nutriólogos disponibles
                     await _searchAvailableStaff(
                       context,
@@ -723,7 +765,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                       endTimeString,
                     );
                   },
-                  child: const Text('Buscar Disponibles'),
+                  child: const Text('Ver disponibilidad'),
                 ),
               ],
             );
@@ -752,9 +794,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Hacer la petición a la API
@@ -783,7 +823,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('No hay ${role == 'trainer' ? 'entrenadores' : 'nutriólogos'} disponibles'),
+            title: Text(
+              'No hay ${role == 'trainer' ? 'entrenadores' : 'nutriólogos'} disponibles',
+            ),
             content: Text(
               'No se encontraron ${role == 'trainer' ? 'entrenadores' : 'nutriólogos'} disponibles para el horario seleccionado. '
               'Por favor intenta con otro horario.',
@@ -811,13 +853,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } catch (e) {
       // Cerrar loading si está abierto
       Navigator.of(context).pop();
-      
+
       print('Error buscando personal disponible: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -834,7 +873,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${role == 'trainer' ? 'Entrenadores' : 'Nutriólogos'} Disponibles'),
+        title: Text(
+          '${role == 'trainer' ? 'Entrenadores' : 'Nutriólogos'} Disponibles',
+        ),
         content: Container(
           width: double.maxFinite,
           child: ListView.builder(
@@ -848,7 +889,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 future: _getStaffName(staffId),
                 builder: (context, snapshot) {
                   String staffName = 'Cargando...';
-                  
+
                   if (snapshot.connectionState == ConnectionState.done) {
                     if (snapshot.hasData) {
                       staffName = snapshot.data!;
@@ -859,25 +900,31 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: role == 'trainer' ? Colors.orange : Colors.green,
+                      backgroundColor: role == 'trainer'
+                          ? Colors.orange
+                          : Colors.green,
                       child: Icon(
-                        role == 'trainer' ? Icons.fitness_center : Icons.restaurant,
+                        role == 'trainer'
+                            ? Icons.fitness_center
+                            : Icons.restaurant,
                         color: Colors.white,
                       ),
                     ),
                     title: Text(staffName),
-                    onTap: snapshot.connectionState == ConnectionState.done ? () {
-                      Navigator.of(context).pop();
-                      _confirmAppointmentCreation(
-                        context,
-                        role,
-                        staffId,
-                        staffName,
-                        date,
-                        startTime,
-                        endTime,
-                      );
-                    } : null, // Deshabilitar tap mientras carga
+                    onTap: snapshot.connectionState == ConnectionState.done
+                        ? () {
+                            Navigator.of(context).pop();
+                            _confirmAppointmentCreation(
+                              context,
+                              role,
+                              staffId,
+                              staffName,
+                              date,
+                              startTime,
+                              endTime,
+                            );
+                          }
+                        : null, // Deshabilitar tap mientras carga
                   );
                 },
               );
@@ -925,7 +972,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           children: [
             Text('¿Confirmas la creación de la cita?'),
             const SizedBox(height: 16),
-            Text('${role == 'trainer' ? 'Entrenador' : 'Nutriólogo'}: $staffName'),
+            Text(
+              '${role == 'trainer' ? 'Entrenador' : 'Nutriólogo'}: $staffName',
+            ),
             Text('Fecha: $date'),
             Text('Hora: $startTime - $endTime'),
           ],
@@ -982,11 +1031,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       print('Usuario ID: $userId');
       print('${role == 'trainer' ? 'Entrenador' : 'Nutriólogo'} ID: $staffId');
       print('Fecha: $date');
-      
+
       // Asegurar formato correcto de horas HH:MM:SS
       final formattedStartTime = _formatTimeForAPI(startTime);
       final formattedEndTime = _formatTimeForAPI(endTime);
-      
+
       print('Hora inicio: $formattedStartTime');
       print('Hora fin: $formattedEndTime');
 
@@ -1033,10 +1082,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } catch (e) {
       print('Error al crear cita: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -1047,13 +1093,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     if (time.split(':').length == 2) {
       return time;
     }
-    
+
     // Si tiene segundos (HH:MM:SS), eliminar los segundos
     if (time.split(':').length == 3) {
       final timeParts = time.split(':');
       return '${timeParts[0]}:${timeParts[1]}';
     }
-    
+
     // Fallback: intentar parsear y formatear sin segundos
     try {
       final timeParts = time.split(':');
@@ -1065,7 +1111,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } catch (e) {
       print('Error formateando hora $time: $e');
     }
-    
+
     // Si todo falla, devolver la hora original
     return time;
   }
@@ -1185,11 +1231,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     IconData icon = Icons.event;
     Color iconColor = Colors.blue;
     int? userId;
+    String appointmentType = 'client'; // Por defecto
 
     // Determinar el contenido basado en el tipo de cita
     if (appointment is TrainerAppointment) {
       title = 'Sesión de Entrenamiento';
       userId = appointment.userId;
+      appointmentType = 'client'; // El usuario es cliente en esta cita
       time =
           '${_formatTime(appointment.startTime)} a ${_formatTime(appointment.endTime)}';
       icon = Icons.fitness_center;
@@ -1197,6 +1245,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } else if (appointment is NutritionistAppointment) {
       title = 'Consulta Nutricional';
       userId = appointment.userId;
+      appointmentType = 'client'; // El usuario es cliente en esta cita
       time =
           '${_formatTime(appointment.startTime)} a ${_formatTime(appointment.endTime)}';
       icon = Icons.restaurant;
@@ -1204,6 +1253,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     } else if (appointment is UserTrainerAppointment) {
       title = 'Sesión con Entrenador';
       userId = appointment.trainerId; // En este caso obtenemos el entrenador
+      appointmentType = 'trainer'; // Mostramos info del entrenador
       time =
           '${_formatTime(appointment.startTime)} a ${_formatTime(appointment.endTime)}';
       icon = Icons.person;
@@ -1213,11 +1263,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       if (appointment.type == 'trainer') {
         title = 'Sesión con Entrenador';
         userId = appointment.trainerId;
+        appointmentType = 'trainer'; // Mostramos info del entrenador
         icon = Icons.fitness_center;
         iconColor = Colors.orange;
       } else if (appointment.type == 'nutritionist') {
         title = 'Consulta con Nutriólogo';
         userId = appointment.nutritionistId;
+        appointmentType = 'nutritionist'; // Mostramos info del nutriólogo
         icon = Icons.restaurant;
         iconColor = Colors.green;
       }
@@ -1269,12 +1321,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                 const SizedBox(height: 4),
                 // Usar el widget optimizado para nombres de usuario
                 if (userId != null)
-                  _buildUserNameWidget(
-                    userId,
-                    appointment is UserTrainerAppointment ||
-                        (appointment is UserAppointment &&
-                            appointment.type == 'trainer'),
-                  )
+                  _buildUserNameWidget(userId, appointmentType)
                 else
                   const Text(
                     'Ver detalles',
@@ -1340,12 +1387,25 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   // Widget para mostrar el nombre del usuario con manejo de caché
-  Widget _buildUserNameWidget(int userId, bool isTrainer) {
+  Widget _buildUserNameWidget(int userId, String appointmentType) {
     final cachedName = _getCachedUserName(userId);
+
+    // Determinar el prefijo basado en el tipo de cita
+    String prefix;
+    switch (appointmentType) {
+      case 'trainer':
+        prefix = 'Entrenador: ';
+        break;
+      case 'nutritionist':
+        prefix = 'Nutriólogo: ';
+        break;
+      default:
+        prefix = 'Cliente: ';
+        break;
+    }
 
     if (cachedName != null) {
       // Si tenemos el nombre en caché, mostrarlo inmediatamente
-      final prefix = isTrainer ? 'Entrenador: ' : 'Cliente: ';
       return Text(
         '$prefix$cachedName',
         style: const TextStyle(color: Colors.black54, fontSize: 14),
@@ -1361,14 +1421,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               style: TextStyle(color: Colors.black54, fontSize: 14),
             );
           } else if (snapshot.hasError) {
-            final prefix = isTrainer ? 'Entrenador' : 'Cliente';
+            final prefixWithoutColon = prefix.replaceAll(': ', '');
             return Text(
-              '$prefix ID: $userId',
+              '$prefixWithoutColon ID: $userId',
               style: const TextStyle(color: Colors.black54, fontSize: 14),
             );
           } else {
             final userName = snapshot.data ?? '';
-            final prefix = isTrainer ? 'Entrenador: ' : 'Cliente: ';
             return Text(
               '$prefix$userName',
               style: const TextStyle(color: Colors.black54, fontSize: 14),
