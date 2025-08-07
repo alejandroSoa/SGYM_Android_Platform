@@ -475,17 +475,27 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     );
     final videoUrlController = TextEditingController(text: exercise.videoUrl);
     EquipmentType selectedEquipmentType = exercise.equipmentType;
+    bool isUpdating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Editar Ejercicio'),
+              title: const Text(
+                'Editar Ejercicio',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: nameController,
@@ -493,6 +503,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'Nombre del ejercicio',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -502,6 +518,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<EquipmentType>(
@@ -518,7 +540,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                       }).toList(),
                       onChanged: (EquipmentType? value) {
                         if (value != null) {
-                          setState(() {
+                          setDialogState(() {
                             selectedEquipmentType = value;
                           });
                         }
@@ -531,45 +553,133 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'URL del video (opcional)',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isUpdating ? null : () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty ||
-                        descriptionController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Por favor completa los campos obligatorios',
-                          ),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          // Validar nombre - mínimo 3 caracteres
+                          if (nameController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre del ejercicio es obligatorio';
+                            });
+                            return;
+                          }
+                          
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre debe tener al menos 3 caracteres';
+                            });
+                            return;
+                          }
 
-                    Navigator.pop(context);
-                    await _updateExercise(
-                      id: exercise.id,
-                      name: nameController.text.trim(),
-                      description: descriptionController.text.trim(),
-                      equipmentType: selectedEquipmentType,
-                      videoUrl: videoUrlController.text.trim(),
-                    );
-                  },
+                          // Validar descripción - mínimo 5 caracteres
+                          if (descriptionController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción es obligatoria';
+                            });
+                            return;
+                          }
+                          
+                          if (descriptionController.text.trim().length < 5) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción debe tener al menos 5 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Validar URL del video si no está vacía
+                          final videoUrl = videoUrlController.text.trim();
+                          if (videoUrl.isNotEmpty) {
+                            final urlRegex = RegExp(
+                              r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
+                            );
+                            if (!urlRegex.hasMatch(videoUrl)) {
+                              setDialogState(() {
+                                errorMessage = 'La URL del video no es válida';
+                              });
+                              return;
+                            }
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
+                          setDialogState(() {
+                            errorMessage = null;
+                            isUpdating = true;
+                          });
+
+                          await _updateExercise(
+                            id: exercise.id,
+                            name: nameController.text.trim(),
+                            description: descriptionController.text.trim(),
+                            equipmentType: selectedEquipmentType,
+                            videoUrl: videoUrl,
+                          );
+
+                          Navigator.pop(context);
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Actualizar'),
+                  child: isUpdating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Actualizar'),
                 ),
               ],
             );
@@ -662,17 +772,27 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     final descriptionController = TextEditingController();
     final videoUrlController = TextEditingController();
     EquipmentType selectedEquipmentType = EquipmentType.dumbbell;
+    bool isCreating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Agregar Ejercicio'),
+              title: const Text(
+                'Agregar Ejercicio',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6366F1),
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: nameController,
@@ -680,6 +800,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'Nombre del ejercicio',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -689,6 +815,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<EquipmentType>(
@@ -705,7 +837,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                       }).toList(),
                       onChanged: (EquipmentType? value) {
                         if (value != null) {
-                          setState(() {
+                          setDialogState(() {
                             selectedEquipmentType = value;
                           });
                         }
@@ -718,44 +850,132 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'URL del video (opcional)',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isCreating ? null : () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty ||
-                        descriptionController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Por favor completa los campos obligatorios',
-                          ),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
+                  onPressed: isCreating
+                      ? null
+                      : () async {
+                          // Validar nombre - mínimo 3 caracteres
+                          if (nameController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre del ejercicio es obligatorio';
+                            });
+                            return;
+                          }
+                          
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre debe tener al menos 3 caracteres';
+                            });
+                            return;
+                          }
 
-                    Navigator.pop(context);
-                    await _createExercise(
-                      name: nameController.text.trim(),
-                      description: descriptionController.text.trim(),
-                      equipmentType: selectedEquipmentType,
-                      videoUrl: videoUrlController.text.trim(),
-                    );
-                  },
+                          // Validar descripción - mínimo 5 caracteres
+                          if (descriptionController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción es obligatoria';
+                            });
+                            return;
+                          }
+                          
+                          if (descriptionController.text.trim().length < 5) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción debe tener al menos 5 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Validar URL del video si no está vacía
+                          final videoUrl = videoUrlController.text.trim();
+                          if (videoUrl.isNotEmpty) {
+                            final urlRegex = RegExp(
+                              r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$'
+                            );
+                            if (!urlRegex.hasMatch(videoUrl)) {
+                              setDialogState(() {
+                                errorMessage = 'La URL del video no es válida';
+                              });
+                              return;
+                            }
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
+                          setDialogState(() {
+                            errorMessage = null;
+                            isCreating = true;
+                          });
+
+                          await _createExercise(
+                            name: nameController.text.trim(),
+                            description: descriptionController.text.trim(),
+                            equipmentType: selectedEquipmentType,
+                            videoUrl: videoUrl,
+                          );
+
+                          Navigator.pop(context);
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Crear'),
+                  child: isCreating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Crear'),
                 ),
               ],
             );
@@ -1150,17 +1370,27 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     final descriptionController = TextEditingController(
       text: routine.description,
     );
+    bool isUpdating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Editar Rutina'),
+              title: const Text(
+                'Editar Rutina',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: nameController,
@@ -1168,6 +1398,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         labelText: 'Nombre de la rutina',
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -1177,42 +1413,117 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 3,
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isUpdating ? null : () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Por favor completa los campos obligatorios',
-                          ),
-                          backgroundColor: Colors.orange,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          // Validar nombre - mínimo 3 caracteres
+                          if (nameController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre de la rutina es obligatorio';
+                            });
+                            return;
+                          }
+                          
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre debe tener al menos 3 caracteres';
+                            });
+                            return;
+                          }
 
-                    Navigator.pop(context);
-                    await _updateRoutine(
-                      id: routine.id,
-                      name: nameController.text.trim(),
-                      description: descriptionController.text.trim(),
-                    );
-                  },
+                          // Validar descripción - mínimo 5 caracteres
+                          if (descriptionController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción es obligatoria';
+                            });
+                            return;
+                          }
+                          
+                          if (descriptionController.text.trim().length < 5) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción debe tener al menos 5 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
+                          setDialogState(() {
+                            errorMessage = null;
+                            isUpdating = true;
+                          });
+
+                          await _updateRoutine(
+                            id: routine.id,
+                            name: nameController.text.trim(),
+                            description: descriptionController.text.trim(),
+                          );
+
+                          Navigator.pop(context);
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Actualizar'),
+                  child: isUpdating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text('Actualizar'),
                 ),
               ],
             );
@@ -1323,8 +1634,47 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
 
   Future<void> _deleteRoutine(int routineId, String routineName) async {
     try {
+      print('🗑️ Iniciando eliminación en cascada de rutina: $routineName (ID: $routineId)');
+      
+      // Paso 1: Obtener todos los ejercicios de la rutina
+      print('📋 Paso 1: Obteniendo ejercicios de la rutina...');
+      final routineExercises = await RoutineService.fetchRoutineExercisesStructured(routineId);
+      
+      if (routineExercises != null && routineExercises.isNotEmpty) {
+        print('🔍 Encontrados ${routineExercises.length} ejercicios en la rutina');
+        
+        // Paso 2: Eliminar todos los ejercicios de la rutina
+        print('🧹 Paso 2: Eliminando ejercicios de la rutina...');
+        for (int i = 0; i < routineExercises.length; i++) {
+          final routineExercise = routineExercises[i];
+          print('   🗂️ Eliminando ejercicio ${i + 1}/${routineExercises.length}: ${routineExercise.exercise.name} (Routine Exercise ID: ${routineExercise.id})');
+          
+          try {
+            final success = await RoutineService.removeExerciseFromRoutine(routineExercise.id);
+            if (success) {
+              print('   ✅ Ejercicio "${routineExercise.exercise.name}" eliminado exitosamente');
+            } else {
+              print('   ⚠️  Error al eliminar ejercicio "${routineExercise.exercise.name}" - servicio retornó false');
+            }
+          } catch (exerciseError) {
+            print('   ❌ Error al eliminar ejercicio "${routineExercise.exercise.name}": $exerciseError');
+            // Continuar con los otros ejercicios aunque uno falle
+          }
+        }
+        print('🎯 Eliminación de ejercicios completada');
+      } else {
+        print('📝 La rutina no tiene ejercicios asignados');
+      }
+      
+      // Paso 3: Eliminar la rutina
+      print('🗑️ Paso 3: Eliminando la rutina...');
       await RoutineService.deleteRoutine(routineId);
-      await _loadRoutines(); // Recargar la lista
+      print('✅ Rutina eliminada exitosamente');
+      
+      // Paso 4: Recargar la lista
+      print('🔄 Paso 4: Recargando lista de rutinas...');
+      await _loadRoutines();
+      print('✨ Proceso de eliminación completado exitosamente');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1336,10 +1686,11 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
         );
       }
     } catch (e) {
+      print('❌ Error durante la eliminación en cascada de rutina: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text('Error al eliminar la rutina: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -1398,6 +1749,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     bool isCreating = false;
+    String? errorMessage; // Variable para almacenar mensajes de error
 
     showDialog(
       context: context,
@@ -1426,6 +1778,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.fitness_center),
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -1439,7 +1797,45 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                         prefixIcon: Icon(Icons.description),
                         hintText: 'Describe la rutina...',
                       ),
+                      onChanged: (_) {
+                        // Limpiar error cuando el usuario escriba
+                        setDialogState(() {
+                          errorMessage = null;
+                        });
+                      },
                     ),
+
+                    // Mostrar mensaje de error si existe
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red[200]!),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red[700],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                errorMessage!,
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1452,29 +1848,45 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                   onPressed: isCreating
                       ? null
                       : () async {
+                          // Validar nombre - mínimo 3 caracteres
                           if (nameController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'El nombre de la rutina es obligatorio',
-                                ),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            setDialogState(() {
+                              errorMessage = 'El nombre de la rutina es obligatorio';
+                            });
+                            return;
+                          }
+                          
+                          if (nameController.text.trim().length < 3) {
+                            setDialogState(() {
+                              errorMessage = 'El nombre debe tener al menos 3 caracteres';
+                            });
                             return;
                           }
 
+                          // Validar descripción - mínimo 5 caracteres
+                          if (descriptionController.text.trim().isEmpty) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción es obligatoria';
+                            });
+                            return;
+                          }
+                          
+                          if (descriptionController.text.trim().length < 5) {
+                            setDialogState(() {
+                              errorMessage = 'La descripción debe tener al menos 5 caracteres';
+                            });
+                            return;
+                          }
+
+                          // Limpiar mensaje de error si todo está bien
                           setDialogState(() {
+                            errorMessage = null;
                             isCreating = true;
                           });
 
                           await _createRoutine(
                             name: nameController.text.trim(),
-                            description:
-                                descriptionController.text.trim().isEmpty
-                                ? null
-                                : descriptionController.text.trim(),
+                            description: descriptionController.text.trim(),
                           );
 
                           Navigator.pop(context);
@@ -1600,38 +2012,10 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
 
       if (routineExercise != null) {
         await _loadRoutineExercises();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Ejercicio "${exercise.name}" agregado a la rutina',
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al agregar el ejercicio'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // Error handling sin SnackBar - solo logging si es necesario
+      print('Error al agregar ejercicio a rutina: $e');
     }
   }
 
@@ -1645,38 +2029,10 @@ class _RoutineExercisesManagerState extends State<_RoutineExercisesManager> {
 
       if (success) {
         await _loadRoutineExercises();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Ejercicio "${routineExercise.exercise.name}" eliminado de la rutina',
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar el ejercicio'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // Error handling sin SnackBar - solo logging si es necesario
+      print('Error al eliminar ejercicio de rutina: $e');
     }
   }
 
