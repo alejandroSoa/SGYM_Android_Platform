@@ -395,8 +395,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Filtrar citas del día actual
     final todayAppointments = userAppointments.where((appointment) {
-      print('Comparando fecha: "${appointment.date}" == "$todayString"');
-      return appointment.date == todayString;
+      final normalizedDate = _normalizeDate(appointment.date);
+      print('Comparando fecha: "${appointment.date}" -> "$normalizedDate" == "$todayString"');
+      return normalizedDate == todayString;
     }).toList();
 
     print('Citas encontradas para hoy: ${todayAppointments.length}');
@@ -618,5 +619,41 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // Método auxiliar para normalizar fechas y manejar diferentes formatos
+  String _normalizeDate(String dateString) {
+    try {
+      print('🔍 [HOME] Normalizando fecha: "$dateString"');
+      
+      // Si la fecha ya está en formato YYYY-MM-DD, devolverla tal como está
+      if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(dateString)) {
+        print('✅ [HOME] Fecha ya está en formato correcto: $dateString');
+        return dateString;
+      }
+
+      // Si la fecha está en formato YYYY/MM/DD, convertir a YYYY-MM-DD
+      if (RegExp(r'^\d{4}/\d{2}/\d{2}$').hasMatch(dateString)) {
+        final normalized = dateString.replaceAll('/', '-');
+        print('✅ [HOME] Fecha convertida de YYYY/MM/DD: $dateString -> $normalized');
+        return normalized;
+      }
+
+      // Si la fecha está en formato ISO (2025-08-07T00:00:00.000Z), extraer solo la parte de la fecha
+      if (dateString.contains('T')) {
+        final normalized = dateString.split('T')[0];
+        print('✅ [HOME] Fecha extraída de formato ISO: $dateString -> $normalized');
+        return normalized;
+      }
+
+      // Si no coincide con ningún formato conocido, intentar parsear como DateTime
+      final parsedDate = DateTime.parse(dateString);
+      final normalized = '${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+      print('✅ [HOME] Fecha parseada como DateTime: $dateString -> $normalized');
+      return normalized;
+    } catch (e) {
+      print('❌ [HOME] Error normalizando fecha $dateString: $e');
+      return dateString; // Devolver la fecha original si hay error
+    }
   }
 }
