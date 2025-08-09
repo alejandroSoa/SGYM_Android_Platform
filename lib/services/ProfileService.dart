@@ -99,7 +99,7 @@ class ProfileService {
       final User = await UserService.getUser();
       final idPath = await User?['id'];
       final baseUrl = dotenv.env['AUTH_BASE_URL'];
-      final fullUrl = '$baseUrl/users/$idPath/qr';
+      final fullUrl = '$baseUrl/oauth/users/$idPath/qr';
 
       print('Haciendo petición POST a: $fullUrl'); // Debug log
       final response = await NetworkService.post(fullUrl);
