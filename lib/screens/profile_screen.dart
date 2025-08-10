@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../interfaces/user/qr_interface.dart';
 import '../services/ProfileService.dart';
+import '../widgets/SubscriptionWebView.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -1023,6 +1024,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Función para abrir la página de suscripción en WebView
+  Future<void> _showSubscription() async {
+    print('=== INICIANDO _showSubscription ===');
+
+    try {
+      const String subscriptionUrl = 'http://146.190.130.50';
+
+      print('Abriendo WebView de suscripción con URL: $subscriptionUrl');
+
+      // Abrir el WebView de suscripción
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => SubscriptionWebView(
+            subscriptionUrl: subscriptionUrl,
+            redirectUri: null, // Puedes agregar un redirectUri si es necesario
+          ),
+        ),
+      );
+
+      // Procesar el resultado si es necesario
+      if (result != null && result is Map) {
+        print('Resultado del WebView de suscripción: $result');
+
+        if (result['success'] == true) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Suscripción procesada exitosamente'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        } else if (result['error'] != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error en suscripción: ${result['error']}'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error al abrir WebView de suscripción: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al abrir la página de suscripción: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+
+    print('=== FINALIZANDO _showSubscription ===');
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -1124,10 +1187,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const _OptionItem(
-                    title: 'Subscripción',
-                    icon: Icons.credit_card,
-                    iconColor: Color(0xFF7012DA),
+                  GestureDetector(
+                    onTap: isUpdating ? null : _showSubscription,
+                    child: const _OptionItem(
+                      title: 'Suscripción',
+                      icon: Icons.credit_card,
+                      iconColor: Color(0xFF7012DA),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
