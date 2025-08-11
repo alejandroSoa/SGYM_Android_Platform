@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../interfaces/user/profile_interface.dart';
 import '../interfaces/user/qr_interface.dart';
 import '../services/ProfileService.dart';
+import '../services/UserService.dart';
 import '../widgets/SubscriptionWebView.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1029,16 +1030,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     print('=== INICIANDO _showSubscription ===');
 
     try {
-      const String subscriptionUrl = 'http://146.190.130.50';
-
-      print('Abriendo WebView de suscripción con URL: $subscriptionUrl');
+      // Verificar token antes de abrir WebView
+      final token = await UserService.getToken();
+      print('Token disponible en profile_screen: ${token != null ? 'SÍ (${token.length} chars)' : 'NO'}');
+      
+      print('Abriendo WebView de suscripción con token del usuario');
 
       // Abrir el WebView de suscripción
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => SubscriptionWebView(
-            subscriptionUrl: subscriptionUrl,
-            redirectUri: null, // Puedes agregar un redirectUri si es necesario
+            onResult: (result) {
+              print('Callback del WebView de suscripción: $result');
+              Navigator.of(context).pop(result);
+            },
           ),
         ),
       );
