@@ -3,9 +3,9 @@ import '../interfaces/user/profile_interface.dart';
 import '../interfaces/user/qr_interface.dart';
 import '../services/ProfileService.dart';
 import '../services/UserService.dart';
-import '../widgets/SubscriptionWebView.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -1025,57 +1025,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Función para abrir la página de suscripción en WebView
+  // Función para abrir la página de suscripción en el navegador del usuario
   Future<void> _showSubscription() async {
     print('=== INICIANDO _showSubscription ===');
 
     try {
-      // Verificar token antes de abrir WebView
+      // Verificar token antes de abrir el navegador
       final token = await UserService.getToken();
       print('Token disponible en profile_screen: ${token != null ? 'SÍ (${token.length} chars)' : 'NO'}');
       
-      print('Abriendo WebView de suscripción con token del usuario');
-
-      // Abrir el WebView de suscripción
-      final result = await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => SubscriptionWebView(
-            onResult: (result) {
-              print('Callback del WebView de suscripción: $result');
-              Navigator.of(context).pop(result);
-            },
-          ),
-        ),
-      );
-
-      // Procesar el resultado si es necesario
-      if (result != null && result is Map) {
-        print('Resultado del WebView de suscripción: $result');
-
-        if (result['success'] == true) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Suscripción procesada exitosamente'),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
-        } else if (result['error'] != null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error en suscripción: ${result['error']}'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: No se encontró token de usuario'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
+        return;
+      }
+
+      // Construir la URL con el token como parámetro
+      const baseUrl = '146.190.130.50';
+      final subscriptionUrl = 'http://$baseUrl/federation-login?access_token=$token';
+      print('Abriendo navegador con URL: $subscriptionUrl');
+
+      // Crear Uri desde la URL
+      final uri = Uri.parse(subscriptionUrl);
+
+      // Verificar si se puede abrir la URL
+      if (await canLaunchUrl(uri)) {
+        // Abrir en el navegador del usuario
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Fuerza a abrir en navegador externo
+        );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Abriendo página de suscripción en el navegador...'),
+              backgroundColor: Colors.blue,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        throw Exception('No se puede abrir la URL: $subscriptionUrl');
       }
     } catch (e) {
-      print('Error al abrir WebView de suscripción: $e');
+      print('Error al abrir navegador para suscripción: $e');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
