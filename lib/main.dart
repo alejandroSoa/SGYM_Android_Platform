@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 // import 'package:sgym/screens/profile_screen.dart';
 // import 'screens/notifications_screen.dart';
 import 'screens/first_time_screen.dart';
+import 'screens/subscription_needed_screen.dart';
 import 'widgets/custom_top_bar.dart';
 import 'config/ScreenConfig.dart';
 import 'services/InitializationService.dart';
@@ -14,6 +15,7 @@ import 'services/AuthService.dart';
 import 'services/RoleConfigService.dart';
 import 'services/UserService.dart';
 import 'services/ProfileService.dart';
+import 'services/SuscriptionService.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -144,6 +146,26 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
 
   Future<void> _loadRoleBasedConfig() async {
     try {
+      // 1. Verificar suscripción primero
+      print("[MAIN_LAYOUT] Verificando suscripción del usuario...");
+      final hasSubscription = await SubscriptionService.hasActiveSubscriptions();
+      
+      if (!hasSubscription) {
+        print("[MAIN_LAYOUT] Usuario no tiene suscripción activa, cargando configuración limitada...");
+        // Si no tiene suscripción, mostrar solo la pantalla de perfil para que pueda suscribirse
+        viewConfigs = [];
+        navItems = [
+          {
+            'label': 'Perfil',
+            'icon': Icons.person,
+          }
+        ];
+        print("[MAIN_LAYOUT] Configuración limitada cargada para usuario sin suscripción");
+        return;
+      }
+
+      // 2. Si tiene suscripción, continuar con la configuración completa por rol
+      print("[MAIN_LAYOUT] Usuario tiene suscripción activa, cargando configuración completa por rol...");
       final userRole = await AuthService.getCurrentUserRole();
       print("[MAIN_LAYOUT] User role: $userRole");
 
@@ -167,13 +189,15 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
       print("[MAIN_LAYOUT] ViewConfigs length: ${viewConfigs.length}");
     } catch (e) {
       print("[MAIN_LAYOUT] Error loading role config: $e");
-      // Configuración por defecto en caso de error
-      viewConfigs = RoleConfigService.getScreensForRole(
-        0,
-        onBack: () => setState(() => currentIndex = 0),
-        onNotificationChanged: _refreshNotificationCount,
-      );
-      navItems = RoleConfigService.getNavItemsForRole(0);
+      // Configuración mínima en caso de error (solo perfil)
+      viewConfigs = [];
+      navItems = [
+        {
+          'label': 'Perfil',
+          'icon': Icons.person,
+        }
+      ];
+      print("[MAIN_LAYOUT] Configuración de error cargada");
     }
   }
 
@@ -225,9 +249,8 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
     }
 
     if (viewConfigs.isEmpty) {
-      return const Scaffold(
-        body: Center(child: Text('Error: No se pudieron cargar las pantallas')),
-      );
+      // Si no hay configuraciones de pantalla (usuario sin suscripción), mostrar pantalla de suscripción
+      return const SubscriptionNeededScreen();
     }
 
     final config = viewConfigs[currentIndex];

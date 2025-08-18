@@ -5,6 +5,45 @@ import '../interfaces/payment/suscription_interface.dart';
 
 class SubscriptionService {
   static String get _baseUrl => dotenv.env['BUSINESS_BASE_URL'] ?? '';
+  static String get _paymentsBaseUrl => dotenv.env['PAYMENTS_BASE_URL'] ?? '';
+
+  // Obtener suscripciones del usuario desde el endpoint de pagos
+  static Future<Map<String, dynamic>?> getUserSubscriptionsFromPayments() async {
+    try {
+      final fullUrl = '$_paymentsBaseUrl/subscriptions/user/subscriptions';
+      print('🔍 [SUBSCRIPTION_SERVICE] Consultando suscripciones en: $fullUrl');
+      
+      final response = await NetworkService.get(fullUrl);
+      print('📋 [SUBSCRIPTION_SERVICE] Respuesta del servidor: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print('✅ [SUBSCRIPTION_SERVICE] Datos recibidos: $responseData');
+        return responseData;
+      } else {
+        print('❌ [SUBSCRIPTION_SERVICE] Error en respuesta: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ [SUBSCRIPTION_SERVICE] Error al obtener suscripciones: $e');
+      return null;
+    }
+  }
+
+  // Verificar si el usuario tiene suscripciones activas
+  static Future<bool> hasActiveSubscriptions() async {
+    try {
+      final response = await getUserSubscriptionsFromPayments();
+      if (response != null && response['status'] == 'success') {
+        final data = response['data'] as List?;
+        return data != null && data.isNotEmpty;
+      }
+      return false;
+    } catch (e) {
+      print('❌ [SUBSCRIPTION_SERVICE] Error verificando suscripciones activas: $e');
+      return false;
+    }
+  }
 
   // Crear suscripción
   static Future<Subscription?> createSubscription({
