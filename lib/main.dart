@@ -146,29 +146,39 @@ class _MainLayoutState extends State<MainLayout> with WidgetsBindingObserver {
 
   Future<void> _loadRoleBasedConfig() async {
     try {
-      // 1. Verificar suscripción primero
-      print("[MAIN_LAYOUT] Verificando suscripción del usuario...");
-      final hasSubscription = await SubscriptionService.hasActiveSubscriptions();
-      
-      if (!hasSubscription) {
-        print("[MAIN_LAYOUT] Usuario no tiene suscripción activa, cargando configuración limitada...");
-        // Si no tiene suscripción, mostrar solo la pantalla de perfil para que pueda suscribirse
-        viewConfigs = [];
-        navItems = [
-          {
-            'label': 'Perfil',
-            'icon': Icons.person,
-          }
-        ];
-        print("[MAIN_LAYOUT] Configuración limitada cargada para usuario sin suscripción");
-        return;
-      }
-
-      // 2. Si tiene suscripción, continuar con la configuración completa por rol
-      print("[MAIN_LAYOUT] Usuario tiene suscripción activa, cargando configuración completa por rol...");
+      // 1. Obtener el role del usuario primero
+      print("[MAIN_LAYOUT] Obteniendo role del usuario...");
       final userRole = await AuthService.getCurrentUserRole();
       print("[MAIN_LAYOUT] User role: $userRole");
 
+      // 2. Verificar si necesita suscripción (solo role_id = 5)
+      bool needsSubscription = false;
+      if (userRole == 5) {
+        print("[MAIN_LAYOUT] Usuario con role_id = 5, verificando suscripción...");
+        final hasSubscription = await SubscriptionService.hasActiveSubscriptions();
+        needsSubscription = !hasSubscription;
+        
+        if (needsSubscription) {
+          print("[MAIN_LAYOUT] Usuario con role_id = 5 no tiene suscripción activa, cargando configuración limitada...");
+          // Si no tiene suscripción, mostrar solo la pantalla de perfil para que pueda suscribirse
+          viewConfigs = [];
+          navItems = [
+            {
+              'label': 'Perfil',
+              'icon': Icons.person,
+            }
+          ];
+          print("[MAIN_LAYOUT] Configuración limitada cargada para usuario sin suscripción");
+          return;
+        }
+      } else if (userRole == 3 || userRole == 6) {
+        print("[MAIN_LAYOUT] Usuario es entrenador (3) o nutriólogo (6), no requiere verificación de suscripción");
+      } else {
+        print("[MAIN_LAYOUT] Usuario con role desconocido: $userRole");
+      }
+
+      // 3. Cargar configuración completa por rol (ya sea porque tiene suscripción o no la necesita)
+      print("[MAIN_LAYOUT] Cargando configuración completa por rol...");
       if (userRole != null) {
         viewConfigs = RoleConfigService.getScreensForRole(
           userRole,

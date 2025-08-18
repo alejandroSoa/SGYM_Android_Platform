@@ -37,7 +37,7 @@ class _FirstTimeScreenState extends State<FirstTimeScreen> {
           bool hasAccess = await AuthService.accessByRole();
           
           if (hasAccess) {
-            authResult = "Autenticación completada y rol verificado exitosamente.";
+            authResult = "¡Bienvenido a SGYM! Tu cuenta ha sido verificada exitosamente.";
             print("[FIRST_TIME] Usuario tiene acceso con el rol requerido");
           } else {
             success = false;
